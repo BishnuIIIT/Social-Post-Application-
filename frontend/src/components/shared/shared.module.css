@@ -1,0 +1,516 @@
+/* =======================================================================
+   shared.module.css — Shared components: TaskPlanet Navbar, Mobile BottomNav,
+   Avatar, Spinner, Modals, Toasts, Lightbox, ErrorMessage, EmptyState.
+   Strict Guideline: Basic CSS / CSS Modules — ❌ NO TailwindCSS
+   ======================================================================= */
+
+/* ── Top Navbar ────────────────────────────────────────────────── */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  height: var(--nav-height);
+  /* Premium frosted-glass effect with colour correction */
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 max(var(--space-6), calc((100% - var(--content-width)) / 2));
+  /* contain: layout prevents the sticky nav from triggering paint outside its bounds */
+  contain: layout;
+  transition: box-shadow var(--duration-base);
+}
+
+/* Subtle shadow appears when user scrolls — applied via JS IntersectionObserver
+   or simply always on for simplicity */
+.navScrolled {
+  box-shadow: 0 2px 20px rgba(15, 23, 42, 0.07);
+}
+
+.brandLink {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.logoIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--gradient-primary);
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 20px;
+  /* Blue glow to give the logo depth */
+  box-shadow: 0 4px 14px rgba(30, 80, 255, 0.30),
+              inset 0 1px 0 rgba(255,255,255,0.25);
+  flex-shrink: 0;
+}
+
+.brandTextGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.brandTitle {
+  font-weight: 800;
+  font-size: 19px;
+  color: var(--color-text-main);
+  letter-spacing: -0.4px;
+  line-height: 1.1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.brandBadge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-primary-border);
+}
+
+.brandSubtitle {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+/* ── Right Nav Controls ─────────────────────────────────────────── */
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.userBadge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 12px 5px 6px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  transition: all var(--duration-fast);
+}
+
+.userBadge:hover {
+  border-color: #cbd5e1;
+  box-shadow: var(--shadow-xs);
+}
+
+.navUsername {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-main);
+}
+
+.logoutBtn {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: transparent;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  transition: all var(--duration-fast);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.logoutBtn:hover {
+  background: #fee2e2;
+  color: var(--color-error);
+  border-color: #fca5a5;
+}
+
+/* ── Mobile Bottom Navigation Bar ─────────────────────────────── */
+/* Directly inspired by the TaskPlanet Android app bottom nav     */
+.bottomNav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--bottom-nav-height);
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--color-border);
+  z-index: 100;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 var(--space-3);
+  /* Include safe-area for iPhone home indicator */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.06);
+}
+
+.bottomNavItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  transition: color var(--duration-fast), background var(--duration-fast);
+  flex: 1;
+}
+
+.bottomNavItem:hover {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.bottomNavItemActive {
+  color: var(--color-primary);
+}
+
+.bottomNavIcon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Floating action button (centre position — "Create Post") */
+.bottomNavCenterBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  /* Lifts the button above the nav bar for the "floating" look */
+  margin-top: -16px;
+  box-shadow: 0 4px 16px rgba(30, 80, 255, 0.40),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border: 3px solid #ffffff;
+  transition: transform var(--duration-fast), box-shadow var(--duration-fast);
+}
+
+.bottomNavCenterBtn:active {
+  transform: scale(0.9);
+  box-shadow: 0 2px 8px rgba(30, 80, 255, 0.3);
+}
+
+/* Show bottom nav on mobile / small screens */
+@media (max-width: 768px) {
+  .bottomNav {
+    display: flex;
+  }
+  .logoutBtn {
+    /* Accessible via bottom nav Logout item instead */
+    display: none;
+  }
+  .brandSubtitle {
+    display: none;
+  }
+  .nav {
+    padding: 0 var(--space-4);
+  }
+}
+
+/* ── Avatar Component ──────────────────────────────────────────── */
+.avatar {
+  border-radius: var(--radius-full);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  flex-shrink: 0;
+  user-select: none;
+  letter-spacing: -0.2px;
+  /* Inner white ring creates a clean separation from any background */
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.45);
+  position: relative;
+}
+
+.avatarLg {
+  width: 48px;
+  height: 48px;
+  font-size: 18px;
+}
+
+.avatarMd {
+  width: 38px;
+  height: 38px;
+  font-size: 14px;
+}
+
+.avatarSm {
+  width: 28px;
+  height: 28px;
+  font-size: 11px;
+}
+
+/* ── Spinner ───────────────────────────────────────────────────── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.spinner {
+  display: inline-block;
+  animation: spin 0.75s linear infinite;
+}
+
+/* ── Toast Notification ────────────────────────────────────────── */
+.toastContainer {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  /* transform applied by the animation below */
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* Pointer-events none prevents toast from blocking clicks behind it */
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  padding: 10px 18px;
+  border-radius: var(--radius-full);
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.22),
+              inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  /* slideDownFade defined in index.css so it is available globally */
+  animation: slideDownFade 0.28s var(--ease-smooth) both;
+  white-space: nowrap;
+}
+
+.toastSuccess {
+  background: linear-gradient(135deg, #059669, #10b981);
+}
+
+.toastError {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+}
+
+/* ── Reusable Error Message ────────────────────────────────────── */
+/* Standardised inline error used by Auth, Composer, Feed, Comments */
+.errorMessage {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-error);
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  /* Left accent strip for quick visual scan */
+  border-left: 3px solid var(--color-error);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+
+/* ── Reusable Empty State ──────────────────────────────────────── */
+/* Composable placeholder shown when a list has zero items         */
+.emptyState {
+  background: var(--color-surface);
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-card);
+  padding: clamp(32px, 6vw, 56px) 24px;
+  text-align: center;
+  color: var(--color-text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.emptyStateIcon {
+  font-size: 48px;
+  line-height: 1;
+  /* Subtle drop shadow for icon depth */
+  filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.10));
+}
+
+.emptyStateTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.emptyStateDesc {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  max-width: 340px;
+  line-height: 1.55;
+}
+
+/* Primary CTA button inside empty state */
+.emptyStateCta {
+  background: var(--gradient-primary);
+  color: #ffffff;
+  padding: 10px 24px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  box-shadow: 0 4px 12px rgba(30, 80, 255, 0.28);
+  transition: all var(--duration-fast);
+  margin-top: var(--space-1);
+}
+
+.emptyStateCta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(30, 80, 255, 0.35);
+}
+
+.emptyStateCta:active {
+  transform: translateY(0);
+}
+
+/* ── Modal (Likers list & Image Lightbox) ──────────────────────── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  animation: fadeIn 0.15s ease-out both;
+}
+
+.modalContent {
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-modal);
+  width: min(440px, 100%);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: scaleUp 0.22s var(--ease-smooth) both;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modalTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modalCloseBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+  font-size: 18px;
+  transition: background var(--duration-fast), color var(--duration-fast);
+}
+
+.modalCloseBtn:hover {
+  background: #f1f5f9;
+  color: var(--color-text-main);
+}
+
+.modalBody {
+  padding: var(--space-4) var(--space-5);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.likerRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.likerRow:last-child {
+  border-bottom: none;
+}
+
+.likerName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-main);
+}
+
+/* ── Lightbox Image Modal ──────────────────────────────────────── */
+.lightboxModal {
+  max-width: 90vw;
+  max-height: 90vh;
+  background: transparent;
+  box-shadow: none;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.lightboxImage {
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.55);
+}
+
+.lightboxClose {
+  position: absolute;
+  top: -44px;
+  right: 0;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 20px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background var(--duration-fast);
+}
+
+.lightboxClose:hover {
+  background: rgba(255, 255, 255, 0.30);
+}

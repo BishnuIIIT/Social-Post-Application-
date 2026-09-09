@@ -1,0 +1,1036 @@
+/* ================================================================
+   Feed.module.css — TaskPlanet Social Feed Styling
+   Feed layout, Composer with Image Preview, Tabs, PostCards,
+   Likers Modal, Share Buttons, and Responsive Mobile Layout.
+   Strict Guideline: Basic CSS / CSS Modules — ❌ NO TailwindCSS
+   ================================================================ */
+
+/* ── Local Keyframes ───────────────────────────────────────────── */
+
+/* Shimmer sweep for skeleton loading cards */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+
+/* Heart bounce when liking a post */
+@keyframes heartbeat {
+  0%   { transform: scale(1);    }
+  30%  { transform: scale(1.40); }
+  60%  { transform: scale(0.90); }
+  100% { transform: scale(1);    }
+}
+
+/* New post slide-in from above */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0);     }
+}
+
+/* Load-more button pulse on hover */
+@keyframes loadMorePulse {
+  0%, 100% { box-shadow: 0 0 0 0   rgba(30, 80, 255, 0.35); }
+  50%       { box-shadow: 0 0 0 8px rgba(30, 80, 255, 0);    }
+}
+
+/* Indeterminate progress bar fill animation */
+@keyframes progressFill {
+  from { background-position: -200px 0; }
+  to   { background-position:  200px 0; }
+}
+
+/* ── Page Shell (below Navbar) ─────────────────────────────────── */
+.pageShell {
+  min-height: calc(100vh - var(--nav-height));
+  background: var(--color-bg);
+  padding-bottom: var(--space-12);
+  padding-top: var(--space-4);
+}
+
+/* ── Two-column grid: sidebar | feed ───────────────────────────── */
+.layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 680px);
+  gap: 40px;
+  width: min(calc(100% - 32px), var(--content-width));
+  margin: 0 auto;
+  padding: var(--space-8) 0;
+}
+
+/* ── Left Sidebar (Profile & Community Quick Nav) ──────────────── */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  /* Sidebar stays in view as the feed scrolls */
+  position: sticky;
+  top: calc(var(--nav-height) + 24px);
+  height: fit-content;
+}
+
+.sidebarCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--duration-base);
+}
+
+.sidebarCard:hover {
+  box-shadow: var(--shadow-card);
+}
+
+.sidebarUserHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: var(--space-3);
+}
+
+.sidebarGreeting {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--color-text-muted);
+}
+
+.sidebarUsername {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--color-text-main);
+  line-height: 1.2;
+}
+
+.sidebarDesc {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin-bottom: var(--space-4);
+}
+
+.sidebarStats {
+  display: flex;
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  justify-content: space-around;
+  margin-bottom: var(--space-4);
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.statValue {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.statLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+/* ── Quick Navigation Links ─────────────────────────────────────── */
+.quickNav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.quickNavBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-body);
+  transition: background var(--duration-fast), color var(--duration-fast);
+  text-align: left;
+}
+
+.quickNavBtn:hover {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+/* Active nav item gets a solid primary tint */
+.quickNavBtnActive {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+/* ── Main Feed Column ───────────────────────────────────────────── */
+.feed {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Tabs & Sorting Bar ─────────────────────────────────────────── */
+.feedTabsContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 6px;
+  box-shadow: var(--shadow-xs);
+}
+
+.feedTabs {
+  display: flex;
+  gap: 4px;
+  /* Required for position:relative on active ::after pseudo-element */
+  position: relative;
+}
+
+.tabBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  /* Smooth colour & background transitions */
+  transition: color var(--duration-fast), background var(--duration-fast);
+  position: relative;
+}
+
+.tabBtn:hover {
+  color: var(--color-text-main);
+  background: var(--color-bg);
+}
+
+/* Active tab: filled primary pill with shadow */
+.tabBtnActive {
+  background: var(--color-primary);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(30, 80, 255, 0.28);
+}
+
+.tabBtnActive:hover {
+  background: var(--color-primary-hover);
+  color: #ffffff;
+}
+
+/* ── Sort Dropdown ──────────────────────────────────────────────── */
+.sortGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 8px;
+}
+
+.sortLabel {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.sortSelect {
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-body);
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--duration-fast);
+}
+
+.sortSelect:focus {
+  border-color: var(--color-primary);
+}
+
+/* ── Post Composer Card ─────────────────────────────────────────── */
+.composer {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-5);
+  margin-bottom: var(--space-5);
+  transition: box-shadow   var(--duration-base),
+              border-color var(--duration-base);
+}
+
+/* Elevated focus ring when user is actively composing */
+.composer:focus-within {
+  box-shadow: 0 0 0 3px var(--color-primary-light),
+              var(--shadow-card);
+  border-color: var(--color-primary-border);
+}
+
+.composerHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: var(--space-3);
+}
+
+.composerPrompt {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.composerTextarea {
+  width: 100%;
+  border: none;
+  resize: none;
+  min-height: 84px;
+  outline: none;
+  color: var(--color-text-main);
+  line-height: 1.6;
+  font-size: 15px;
+  background: transparent;
+  transition: min-height var(--duration-fast);
+}
+
+.composerTextarea::placeholder {
+  color: var(--color-text-subtle);
+}
+
+/* ── Visually hidden (accessible file input) ───────────────────── */
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Multi-image Preview Grid (inside Composer) ─────────────────── */
+.selectedImageSection {
+  margin: var(--space-3) 0;
+}
+
+.selectedImageLabel {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.selectedImageGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.selectedImagePreview {
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background: #f1f5f9;
+  /* Square thumbnails */
+  aspect-ratio: 1;
+}
+
+.previewImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* X button to remove a preview image */
+.removeImageBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #ffffff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 14px;
+  display: grid;
+  place-items: center;
+  transition: background var(--duration-fast);
+  cursor: pointer;
+}
+
+.removeImageBtn:hover {
+  background: #dc2626;
+}
+
+/* ── Composer Footer Controls ───────────────────────────────────── */
+.composerFooter {
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: var(--space-3);
+  margin-top: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* "Add image" button */
+.imageToggleBtn {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary-border);
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-fast), transform var(--duration-fast);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.imageToggleBtn:hover {
+  background: #dbe5ff;
+  transform: translateY(-1px);
+}
+
+.imageToggleBtn:active {
+  transform: translateY(0);
+}
+
+/* Character counter — pushes submit button to the far right */
+.charCount {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--color-text-subtle);
+  /* Prevents count width from shifting layout as numbers change */
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Post / Submit Buttons ──────────────────────────────────────── */
+.postBtn {
+  background: var(--gradient-primary);
+  color: #ffffff;
+  padding: 8px 20px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  transition: transform var(--duration-fast), box-shadow var(--duration-fast);
+  box-shadow: 0 2px 10px rgba(30, 80, 255, 0.28);
+}
+
+.postBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(30, 80, 255, 0.38);
+}
+
+.postBtn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(30, 80, 255, 0.22);
+}
+
+/* ── Post Card Component ────────────────────────────────────────── */
+.postCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+  transition: transform      var(--duration-fast),
+              box-shadow     var(--duration-fast),
+              border-color   var(--duration-fast);
+  /* Required for the ::before accent strip */
+  position: relative;
+  overflow: hidden;
+}
+
+/* Left accent strip that slides in on hover — adds premium "card depth" */
+.postCard::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 16px;
+  bottom: 16px;
+  width: 3px;
+  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+  background: var(--gradient-primary);
+  opacity: 0;
+  transform: scaleY(0.4);
+  transform-origin: center;
+  transition: opacity  var(--duration-base),
+              transform var(--duration-base) var(--ease-smooth);
+}
+
+.postCard:hover {
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--color-primary-border);
+}
+
+.postCard:hover::before {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+/* Newly created post slides in from above with a blue border flash */
+.postCardNew {
+  animation: slideIn 0.35s var(--ease-smooth) both;
+  border-color: var(--color-primary-border);
+}
+
+/* ── Post Header ────────────────────────────────────────────────── */
+.postHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.postAuthorGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.postMeta {
+  display: flex;
+  flex-direction: column;
+}
+
+.postUsername {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-main);
+  line-height: 1.2;
+}
+
+.postTime {
+  font-size: 12px;
+  color: var(--color-text-subtle);
+}
+
+/* ── Post Body ──────────────────────────────────────────────────── */
+.postText {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--color-text-body);
+  /* Preserves intentional line breaks in the post text */
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: var(--space-3) 0;
+}
+
+/* ── Post Image Grid ────────────────────────────────────────────── */
+.postImageGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: var(--space-3) 0;
+}
+
+/* Single image spans the full width */
+.postImageGridSingle {
+  grid-template-columns: 1fr;
+}
+
+.postImageWrapper {
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  background: #f1f5f9;
+  /* 4:3 ratio for grid items; single images use a taller 16:9-ish ratio */
+  aspect-ratio: 4 / 3;
+}
+
+/* Single images get a wider aspect ratio for visual weight */
+.postImageGridSingle .postImageWrapper {
+  aspect-ratio: 16 / 9;
+}
+
+/* Override margin set earlier when wrapper is inside a grid */
+.postImageGrid .postImageWrapper {
+  margin: 0;
+}
+
+.postImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--duration-base);
+}
+
+.postImageWrapper:hover .postImage {
+  transform: scale(1.025);
+}
+
+/* Expand hint badge overlaid on image bottom-right */
+.imageExpandBadge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(15, 23, 42, 0.68);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  /* Hidden by default, revealed on parent hover */
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity   var(--duration-fast),
+              transform var(--duration-fast);
+}
+
+.postImageWrapper:hover .imageExpandBadge {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Likers Banner ──────────────────────────────────────────────── */
+/* Fulfils assignment: "Save the usernames of people who liked or commented." */
+.likersBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: linear-gradient(90deg, #f8fafc 0%, #f1f5ff 100%);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-3);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background var(--duration-fast), border-color var(--duration-fast);
+}
+
+.likersBanner:hover {
+  background: linear-gradient(90deg, #f1f5ff 0%, #e8eeff 100%);
+  border-color: var(--color-primary-border);
+}
+
+/* Overlapping mini-avatar cluster */
+.likersAvatars {
+  display: flex;
+  margin-left: 2px;
+}
+
+.likersAvatarMini {
+  /* Negative margin creates the overlapping cluster effect */
+  margin-left: -6px;
+  border: 1.5px solid #ffffff;
+  border-radius: 50%;
+}
+
+.likersText {
+  flex: 1;
+}
+
+.likersText strong {
+  color: var(--color-text-main);
+}
+
+/* ── Post Action Bar ────────────────────────────────────────────── */
+.postActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.actionGroupLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Base action button — Like, Comment */
+.actionBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: transparent;
+  transition: background var(--duration-fast), color var(--duration-fast);
+}
+
+.actionBtn:hover {
+  background: var(--color-bg);
+  color: var(--color-text-main);
+}
+
+/* Liked state — crimson to rose gradient fill */
+.actionBtnLiked {
+  color: var(--color-like);
+  background: linear-gradient(135deg, #fef2f2 0%, #ffe4e4 100%);
+}
+
+.actionBtnLiked:hover {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: var(--color-like);
+}
+
+/* Heart icon gets a bounce animation on each like click */
+.heartIcon {
+  font-size: 16px;
+  line-height: 1;
+  display: inline-block;
+  transition: transform 0.15s var(--ease-bounce);
+}
+
+.actionBtnLiked .heartIcon {
+  animation: heartbeat 0.38s var(--ease-bounce) forwards;
+}
+
+/* Share button — right side of the action bar */
+.shareBtn {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  padding: 6px 10px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background var(--duration-fast), color var(--duration-fast);
+}
+
+.postOwnerActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.deleteBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: var(--radius-full);
+  color: #dc2626;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all var(--duration-fast);
+}
+
+.deleteBtn:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+.deleteBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.shareBtn:hover {
+  background: var(--color-bg);
+  color: var(--color-text-main);
+}
+
+/* ── Comments Section ───────────────────────────────────────────── */
+.comments {
+  margin-top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: var(--space-4);
+}
+
+.commentItem {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+/* Chat-bubble style comment body */
+.commentBubble {
+  background: #f8fafc;
+  border: 1px solid var(--color-border-subtle);
+  /* Asymmetric radius: flat top-left corner anchors to the avatar */
+  border-radius: 4px 14px 14px 14px;
+  padding: 8px 14px;
+  flex: 1;
+  max-width: calc(100% - 48px);
+}
+
+.commentHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.commentUsername {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.commentTime {
+  font-size: 11px;
+  color: var(--color-text-subtle);
+  white-space: nowrap;
+}
+
+.commentText {
+  font-size: 13px;
+  color: var(--color-text-body);
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+/* Empty comments placeholder text */
+.commentsEmpty {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  padding: 8px 0;
+  font-style: italic;
+}
+
+/* ── Comment Input Form ─────────────────────────────────────────── */
+.commentForm {
+  display: flex;
+  gap: 8px;
+  margin-top: var(--space-2);
+  align-items: center;
+}
+
+.commentInput {
+  flex: 1;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 10px 16px;
+  font-size: 13px;
+  outline: none;
+  background: #ffffff;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+}
+
+.commentInput:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+/* Circular send button */
+.commentSendBtn {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  color: #ffffff;
+  font-size: 15px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 8px rgba(30, 80, 255, 0.30);
+  transition: transform var(--duration-fast), box-shadow var(--duration-fast);
+}
+
+.commentSendBtn:hover:not(:disabled) {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(30, 80, 255, 0.38);
+}
+
+.commentSendBtn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+/* ── Pagination: Load More ──────────────────────────────────────── */
+/* Progress bar showing how much of the feed has been loaded */
+.feedProgress {
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-border);
+  margin: var(--space-3) 0 var(--space-2);
+  overflow: hidden;
+}
+
+.feedProgressBar {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--gradient-primary);
+  transition: width 0.4s var(--ease-smooth);
+}
+
+/* Pagination status line: "Showing 1–10 of 47 posts" */
+.paginationInfo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: var(--space-4);
+  font-variant-numeric: tabular-nums;
+}
+
+.loadMoreBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 13px;
+  margin-top: var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary-border);
+  transition: background var(--duration-fast),
+              transform   var(--duration-fast),
+              box-shadow  var(--duration-fast);
+}
+
+.loadMoreBtn:hover:not(:disabled) {
+  background: #dbe5ff;
+  border-color: #bcd0ff;
+  transform: translateY(-1px);
+  /* Ripple-style pulse ring */
+  animation: loadMorePulse 1.2s ease-out infinite;
+}
+
+.loadMoreBtn:active:not(:disabled) {
+  transform: translateY(0);
+  animation: none;
+}
+
+/* ── Skeleton Loading Cards ─────────────────────────────────────── */
+.skeletonCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+/* Base shimmer animation for all skeleton elements */
+.skeletonRow {
+  height: 14px;
+  border-radius: var(--radius-xs);
+  background: linear-gradient(90deg, #edf0f7 25%, #e2e7f3 50%, #edf0f7 75%);
+  background-size: 600px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.skeletonCircle {
+  border-radius: 50%;
+  background: linear-gradient(90deg, #edf0f7 25%, #e2e7f3 50%, #edf0f7 75%);
+  background-size: 600px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+/* Skeleton image placeholder — uses 16:9 ratio to match single images */
+.skeletonImage {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-md);
+  background: linear-gradient(90deg, #edf0f7 25%, #e2e7f3 50%, #edf0f7 75%);
+  background-size: 600px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  margin: var(--space-3) 0;
+}
+
+/* ── Responsive Layout Rules ────────────────────────────────────── */
+
+/* ── Tablet (769px – 900px): sidebar collapses ───────────────── */
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 0;
+    width: min(calc(100% - 24px), 660px);
+    padding: var(--space-4) 0;
+  }
+  .sidebar {
+    display: none;
+  }
+}
+
+/* ── Mobile (≤ 768px): bottom nav visible, add clearance ─────── */
+@media (max-width: 768px) {
+  .pageShell {
+    /* Bottom padding prevents content hiding behind the fixed bottom nav */
+    padding-bottom: calc(var(--bottom-nav-height) + 24px);
+  }
+}
+
+/* ── Small Mobile (≤ 480px): stack UI elements vertically ────── */
+@media (max-width: 480px) {
+  /* Image preview grid uses smaller tiles */
+  .selectedImageGrid {
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 8px;
+  }
+
+  /* Post images stack into a single column on very small screens */
+  .postImageGrid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Composer footer wraps to vertical layout */
+  .composerFooter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .charCount {
+    margin-left: 0;
+    text-align: right;
+  }
+
+  .postBtn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* Tab bar wraps into two rows */
+  .feedTabsContainer {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .feedTabs {
+    justify-content: space-between;
+  }
+
+  /* Tab buttons share equal width */
+  .tabBtn {
+    flex: 1;
+    justify-content: center;
+    font-size: 12px;
+    padding: 7px 8px;
+  }
+
+  .sortGroup {
+    padding-right: 0;
+    justify-content: flex-end;
+  }
+}
