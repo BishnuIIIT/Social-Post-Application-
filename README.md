@@ -19,7 +19,7 @@
 
 ---
 
-## 🗄️ Database Schema Design (Strictly 2 Collections)
+
 
 ### 1. `users` Collection
 ```json
