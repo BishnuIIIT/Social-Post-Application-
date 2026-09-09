@@ -21,22 +21,6 @@
 
 ---
 
-## 🎯 Assignment Checklist & Features Built
-
-| Requirement | Implementation Details | Status |
-|---|---|:---:|
-| **1. Account Creation** | User signup and login with email, password (hashed with `bcrypt`), and JWT authentication. | ✅ Done |
-| **2. Database Rule** | **Strictly two MongoDB collections**: `users` and `posts` (likes and comments embedded inside posts). | ✅ Done |
-| **3. Create Post** | Post text, image URL, or both. Neither is individually mandatory. Live image preview and test presets included. | ✅ Done |
-| **4. Public Feed** | Feed displaying author username, relative timestamp, content, image, likes count, and comments count. | ✅ Done |
-| **5. Like & Comment** | Users can like or comment on any post with instant UI reflection. | ✅ Done |
-| **6. Save Usernames** | Both user ID and username of everyone who liked or commented are explicitly saved in MongoDB. | ✅ Done |
-| **7. Pure CSS (No Tailwind)** | Styled using CSS Modules, CSS custom properties, and zero TailwindCSS (`❌ Do not use TailwindCSS`). | ✅ Done |
-| **8. Responsive Layout** | Adaptive layout from 320px mobile screens (bottom nav) up to desktop widescreen (two-column). | ✅ Done |
-| **9. Efficient Pagination** | Server-side pagination with skip/limit, skeleton loading shimmers, and "Load more" button. | ✅ Done |
-| **10. Deployment Ready** | Pre-configured for **Vercel** (frontend), **Render** (backend), and **MongoDB Atlas** (database). | ✅ Done |
-
----
 
 ## 🛠️ Tech Stack
 
@@ -192,11 +176,3 @@ Open `http://localhost:5173` in your browser.
 
 ---
 
-## 🏆 Bonus Points Highlights
-
-- 🎨 **Clean and Modern UI**: Exact TaskPlanet color palette, clean cards, subtle border elevations, and rich typography.
-- 📱 **Mobile App Experience**: Responsive layout with dedicated mobile bottom navigation bar.
-- ⚡ **Optimistic UI Engine**: Zero lag on likes and comments; user actions reflect instantly.
-- 📄 **Efficient Pagination Logic**: Clean server-side pagination with count badges and loading skeletons.
-- 👥 **Likers Transparency**: Dedicated popup and avatars showing usernames of everyone who liked the post.
-- 🧩 **Reusable & Documented Code**: Clean components (`Navbar`, `BottomNav`, `PostCard`, `Composer`, `CommentList`), custom hooks (`usePosts`, `useAuth`), and comprehensive JSDoc annotations throughout.
