@@ -1,9 +1,21 @@
 {
   "name": "pulse-social",
   "private": true,
+  "type": "module",
   "scripts": {
+    "start": "node backend/src/server.js",
+    "build": "npm --prefix backend install",
     "install:all": "npm --prefix backend install && npm --prefix frontend install",
     "dev": "concurrently \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\""
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5",
+    "multer": "^2.3.0"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

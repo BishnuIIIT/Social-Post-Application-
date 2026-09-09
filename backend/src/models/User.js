@@ -49,6 +49,18 @@ const userSchema = new mongoose.Schema(
       type:     String,
       required: true,
     },
+
+    /** Temporary 6-digit reset code for Forgot/Reset Password (15-min expiry) */
+    resetCode: {
+      type:    String,
+      default: null,
+    },
+
+    /** Expiration date for the reset code */
+    resetCodeExpires: {
+      type:    Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

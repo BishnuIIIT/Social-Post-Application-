@@ -17,7 +17,7 @@
  * @param {Function} props.onLogout  - Callback to clear the session and show the auth screen.
  */
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import Navbar       from "../shared/Navbar.jsx";
 import BottomNav    from "../shared/BottomNav.jsx";
 import Avatar       from "../shared/Avatar.jsx";
@@ -26,6 +26,7 @@ import EmptyState   from "../shared/EmptyState.jsx";
 import ErrorMessage from "../shared/ErrorMessage.jsx";
 import Composer     from "./Composer.jsx";
 import PostCard     from "./PostCard.jsx";
+import RightSidebar from "./RightSidebar.jsx";
 import { usePosts, PAGE_SIZE } from "../../hooks/usePosts.js";
 import styles       from "./Feed.module.css";
 import sharedStyles from "../shared/shared.module.css";
@@ -116,45 +117,33 @@ export default function Feed({ user, onLogout }) {
   } = usePosts();
 
   // ── Local UI State ─────────────────────────────────────────────
-  /** Active toast notification: { message, type } | null */
   const [toast, setToast] = useState(null);
-
-  /**
-   * ID of the most recently created post so PostCard can apply
-   * the slide-in entrance animation only on that one card.
-   */
   const [newestPostId, setNewestPostId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  /** Saved/Bookmarked post IDs persisted in localStorage */
+  const [savedPostIds, setSavedPostIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem("tp_saved_posts");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
 
   // ── Handlers ──────────────────────────────────────────────────
 
-  /**
-   * Display a floating toast notification for 3 seconds.
-   *
-   * @param {string} message - Text to display in the toast.
-   * @param {"success"|"error"} [type="success"] - Controls toast colour.
-   */
   const showToast = useCallback((message, type = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  /**
-   * Prepend a newly published post at the top of the feed and
-   * temporarily mark it as "new" so the slide-in animation fires once.
-   *
-   * @param {object} newPost - Post document returned by the API.
-   */
   const handlePostCreated = useCallback((newPost) => {
     prependPost(newPost);
     setNewestPostId(newPost.id);
-    // Clear the "new" marker after the animation completes (~350 ms)
     setTimeout(() => setNewestPostId(null), 600);
   }, [prependPost]);
 
-  /**
-   * Scroll the Composer card into view and focus its textarea.
-   * Used by the sidebar, empty-state CTA, and mobile bottom nav.
-   */
   const scrollToComposer = useCallback(() => {
     const el = document.getElementById("composer-card");
     if (el) {
@@ -164,19 +153,72 @@ export default function Feed({ user, onLogout }) {
     }
   }, []);
 
-  // ── Derived values ─────────────────────────────────────────────
-  /** Determine the correct empty-state message based on the active tab. */
-  const emptyTitle   = filter === "my" ? "You haven't posted anything yet!" : "No posts found";
-  const emptyDesc    = filter === "my"
+  const toggleSavePost = useCallback((postId) => {
+    setSavedPostIds((prev) => {
+      const isSaved = prev.includes(postId);
+      const next = isSaved ? prev.filter((id) => id !== postId) : [...prev, postId];
+      try {
+        localStorage.setItem("tp_saved_posts", JSON.stringify(next));
+      } catch {}
+      showToast(isSaved ? "Post removed from saved bookmarks." : "Post saved to bookmarks! 🔖", "success");
+      return next;
+    });
+  }, [showToast]);
+
+  const handleHashtagClick = useCallback((tag) => {
+    setSearchQuery(`#${tag}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  // ── Derived filtered posts ─────────────────────────────────────
+  const displayPosts = useMemo(() => {
+    let list = posts;
+
+    // Filter by saved tab
+    if (filter === "saved") {
+      list = list.filter((p) => savedPostIds.includes(p.id));
+    }
+
+    // Filter by search query (text or author)
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter((p) => {
+        const matchText = p.text?.toLowerCase().includes(q);
+        const matchUser = p.username?.toLowerCase().includes(q);
+        return matchText || matchUser;
+      });
+    }
+
+    return list;
+  }, [posts, filter, savedPostIds, searchQuery]);
+
+  const emptyTitle = filter === "my"
+    ? "You haven't posted anything yet!"
+    : filter === "saved"
+      ? "No saved posts yet"
+      : searchQuery.trim()
+        ? `No posts matching "${searchQuery}"`
+        : "No posts found";
+
+  const emptyDesc = filter === "my"
     ? "Share your first thought or image above to see it here."
-    : "Be the first to share an update with the TaskPlanet community.";
+    : filter === "saved"
+      ? "Click the 📑 Save button on any post to bookmark it for later."
+      : searchQuery.trim()
+        ? "Try searching for a different keyword or #hashtag."
+        : "Be the first to share an update with the TaskPlanet community.";
 
   // ── Render ────────────────────────────────────────────────────
   return (
     <div className={styles.pageShell}>
 
-      {/* ── Desktop & Tablet Header ────────────────────────────── */}
-      <Navbar user={user} onLogout={onLogout} />
+      {/* ── Desktop & Tablet Header with Search & Theme Toggle ── */}
+      <Navbar
+        user={user}
+        onLogout={onLogout}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
 
       {/* ── Toast Notifications ────────────────────────────────── */}
       {toast && (
@@ -198,7 +240,6 @@ export default function Feed({ user, onLogout }) {
         {/* ── Left Sidebar: Profile & Community Navigation ─────── */}
         <aside className={styles.sidebar}>
           <div className={styles.sidebarCard}>
-            {/* User greeting + avatar */}
             <div className={styles.sidebarUserHeader}>
               <Avatar name={user.username} size="lg" />
               <div>
@@ -211,24 +252,22 @@ export default function Feed({ user, onLogout }) {
               Connect, post moments, and explore community updates on TaskPlanet Social.
             </p>
 
-            {/* Community stats strip */}
             <div className={styles.sidebarStats}>
               <div className={styles.statItem}>
                 <span className={styles.statValue}>{total}</span>
                 <span className={styles.statLabel}>Total Posts</span>
               </div>
               <div className={styles.statItem}>
-                <span className={styles.statValue}>Public</span>
-                <span className={styles.statLabel}>Community</span>
+                <span className={styles.statValue}>{savedPostIds.length}</span>
+                <span className={styles.statLabel}>Saved</span>
               </div>
             </div>
 
-            {/* Quick-filter navigation links */}
             <nav className={styles.quickNav} aria-label="Feed filters">
               <button
                 type="button"
                 className={`${styles.quickNavBtn} ${filter === "all" ? styles.quickNavBtnActive : ""}`}
-                onClick={() => switchFilter("all")}
+                onClick={() => { switchFilter("all"); setSearchQuery(""); }}
               >
                 <span aria-hidden="true">🌐</span>
                 <span>All Community Feed</span>
@@ -237,10 +276,19 @@ export default function Feed({ user, onLogout }) {
               <button
                 type="button"
                 className={`${styles.quickNavBtn} ${filter === "my" ? styles.quickNavBtnActive : ""}`}
-                onClick={() => switchFilter("my")}
+                onClick={() => { switchFilter("my"); setSearchQuery(""); }}
               >
                 <span aria-hidden="true">👤</span>
                 <span>My Posts</span>
+              </button>
+
+              <button
+                type="button"
+                className={`${styles.quickNavBtn} ${filter === "saved" ? styles.quickNavBtnActive : ""}`}
+                onClick={() => { switchFilter("saved"); setSearchQuery(""); }}
+              >
+                <span aria-hidden="true">🔖</span>
+                <span>Saved Bookmarks ({savedPostIds.length})</span>
               </button>
 
               <button
@@ -291,6 +339,17 @@ export default function Feed({ user, onLogout }) {
                 <span>👤 My Posts</span>
               </button>
 
+              {/* Saved Posts tab */}
+              <button
+                type="button"
+                role="tab"
+                aria-selected={filter === "saved"}
+                className={`${styles.tabBtn} ${filter === "saved" ? styles.tabBtnActive : ""}`}
+                onClick={() => switchFilter("saved")}
+              >
+                <span>🔖 Saved ({savedPostIds.length})</span>
+              </button>
+
               {/* Trending tab */}
               <button
                 type="button"
@@ -320,17 +379,49 @@ export default function Feed({ user, onLogout }) {
             </div>
           </div>
 
+          {/* ── Active Search Filter Notice ─────────────────────── */}
+          {searchQuery.trim() && (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              background: "var(--color-primary-light)",
+              border: "1px solid var(--color-primary-border)",
+              borderRadius: "var(--radius-md)",
+              padding: "8px 14px",
+              marginBottom: 16,
+              fontSize: 13,
+              color: "var(--color-primary)",
+              fontWeight: 600
+            }}>
+              <span>Filtering posts by: <strong>"{searchQuery}"</strong></span>
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--color-primary)",
+                  cursor: "pointer",
+                  fontWeight: 700,
+                  fontSize: 12
+                }}
+              >
+                ✕ Clear
+              </button>
+            </div>
+          )}
+
           {/* ── Fetch Error Banner ──────────────────────────────── */}
           {error && <ErrorMessage message={error} />}
 
           {/* ── Posts List / Skeletons / Empty State ────────────── */}
           {loading ? (
-            // Show shimmer skeleton cards while loading page 1
             Array.from({ length: SKELETON_COUNT }, (_, i) => (
               <SkeletonCard key={i} />
             ))
-          ) : posts.length > 0 ? (
-            posts.map((post) => (
+          ) : displayPosts.length > 0 ? (
+            displayPosts.map((post) => (
               <PostCard
                 key={post.id}
                 post={post}
@@ -339,22 +430,24 @@ export default function Feed({ user, onLogout }) {
                 onAddComment={addComment}
                 onDeletePost={deletePost}
                 onToast={showToast}
+                onHashtagClick={handleHashtagClick}
+                isSaved={savedPostIds.includes(post.id)}
+                onToggleSave={toggleSavePost}
                 isNew={post.id === newestPostId}
               />
             ))
           ) : (
-            // No results — show contextual empty state
             <EmptyState
-              icon={filter === "my" ? "📝" : "📭"}
+              icon={filter === "saved" ? "🔖" : filter === "my" ? "📝" : "📭"}
               title={emptyTitle}
               description={emptyDesc}
-              ctaLabel="Create a Post"
-              onCta={scrollToComposer}
+              ctaLabel={filter === "saved" ? null : "Create a Post"}
+              onCta={filter === "saved" ? null : scrollToComposer}
             />
           )}
 
           {/* ── Load More Button ────────────────────────────────── */}
-          {hasMore && (
+          {hasMore && filter !== "saved" && !searchQuery && (
             <button
               type="button"
               className={styles.loadMoreBtn}
@@ -374,10 +467,13 @@ export default function Feed({ user, onLogout }) {
           )}
 
           {/* ── Progress Bar + "Showing X–Y of Z" Info ─────────── */}
-          {!loading && posts.length > 0 && (
-            <PaginationFooter loaded={posts.length} total={total} />
+          {!loading && displayPosts.length > 0 && (
+            <PaginationFooter loaded={displayPosts.length} total={total} />
           )}
         </main>
+
+        {/* ── Right Sidebar: Trending Topics & Community Pulse ─── */}
+        <RightSidebar onSelectTag={handleHashtagClick} />
       </div>
 
       {/* ── Mobile Bottom Navigation Bar ───────────────────────── */}

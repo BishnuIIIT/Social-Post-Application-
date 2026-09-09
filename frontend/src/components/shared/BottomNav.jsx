@@ -32,6 +32,19 @@ export default function BottomNav({ activeTab, onSelectTab, onCreateClick, onLog
         <span>Feed</span>
       </button>
 
+      {/* ── Saved Posts ── */}
+      <button
+        className={`${styles.bottomNavItem} ${activeTab === "saved" ? styles.bottomNavItemActive : ""}`}
+        onClick={() => {
+          onSelectTab("saved");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        aria-label="Saved Bookmarks"
+      >
+        <span className={styles.bottomNavIcon}>🔖</span>
+        <span>Saved</span>
+      </button>
+
       {/* ── Create Post Action Button ── */}
       <button
         className={styles.bottomNavCenterBtn}

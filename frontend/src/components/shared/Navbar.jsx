@@ -13,11 +13,35 @@
  * @param {Function} props.onLogout  - Logout handler.
  */
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Avatar from "./Avatar.jsx";
 import styles from "./shared.module.css";
 
-export default function Navbar({ user, onLogout }) {
+export default function Navbar({ user, onLogout, searchQuery = "", onSearchChange }) {
+  // ── Theme State ────────────────────────────────────────────────
+  const [theme, setTheme] = useState(() => {
+    try {
+      const saved = localStorage.getItem("tp_theme");
+      if (saved) return saved;
+      return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+    } catch {
+      return "light";
+    }
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    try {
+      localStorage.setItem("tp_theme", theme);
+    } catch {}
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
+
   return (
     <header className={styles.nav}>
       {/* ── Brand & App Name (TaskPlanet Social) ── */}
@@ -32,10 +56,50 @@ export default function Navbar({ user, onLogout }) {
         </div>
       </div>
 
+      {/* ── Center: Search Bar (Desktop & Tablet) ── */}
+      {onSearchChange && (
+        <div className={styles.navSearch}>
+          <span className={styles.navSearchIcon} aria-hidden="true">🔍</span>
+          <input
+            type="search"
+            className={styles.navSearchInput}
+            placeholder="Search posts, #tags, authors…"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            aria-label="Search posts"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              className={styles.navSearchClear}
+              onClick={() => onSearchChange("")}
+              aria-label="Clear search"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      )}
+
       {/* ── Right: User Profile & Actions ── */}
       <div className={styles.navRight}>
-        <div className={styles.userBadge} title={`Logged in as ${user.username}`}>
-          <Avatar name={user.username} size="sm" />
+        {/* Theme Switcher */}
+        <button
+          type="button"
+          className={styles.themeToggleBtn}
+          onClick={toggleTheme}
+          title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
+          aria-label={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
+        >
+          {theme === "dark" ? "☀️" : "🌙"}
+        </button>
+
+        {/* User Profile Badge with Live Status Dot */}
+        <div className={styles.userBadge} title={`Logged in as ${user.username} (Active now)`}>
+          <div className={styles.avatarWrapper}>
+            <Avatar name={user.username} size="sm" />
+            <span className={styles.statusDot} title="Online" aria-hidden="true" />
+          </div>
           <span className={styles.navUsername}>{user.username}</span>
         </div>
 

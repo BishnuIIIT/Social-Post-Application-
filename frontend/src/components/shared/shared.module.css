@@ -87,27 +87,123 @@
   font-weight: 500;
 }
 
+/* ── Top Navbar Search Bar ───────────────────────────────────────── */
+.navSearch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 6px 14px;
+  width: 260px;
+  transition: all var(--duration-fast);
+}
+
+.navSearch:focus-within {
+  background: var(--color-surface);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+  width: 300px;
+}
+
+.navSearchIcon {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  user-select: none;
+}
+
+.navSearchInput {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  color: var(--color-text-main);
+  width: 100%;
+}
+
+.navSearchInput::placeholder {
+  color: var(--color-text-subtle);
+}
+
+.navSearchClear {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  padding: 2px 5px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.navSearchClear:hover {
+  color: var(--color-text-main);
+  background: var(--color-border);
+}
+
 /* ── Right Nav Controls ─────────────────────────────────────────── */
 .navRight {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
+}
+
+/* Theme toggle button (Sun / Moon) */
+.themeToggleBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-full);
+  display: grid;
+  place-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-body);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.themeToggleBtn:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-primary);
+  transform: rotate(15deg) scale(1.05);
+  box-shadow: var(--shadow-xs);
 }
 
 .userBadge {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 5px 12px 5px 6px;
+  padding: 4px 12px 4px 5px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-full);
   transition: all var(--duration-fast);
+  position: relative;
 }
 
 .userBadge:hover {
   border-color: #cbd5e1;
   box-shadow: var(--shadow-xs);
+}
+
+.avatarWrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.statusDot {
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #10B981;
+  border: 1.5px solid var(--color-surface);
+  animation: livePulse 2s infinite;
 }
 
 .navUsername {
@@ -513,4 +609,67 @@
 
 .lightboxClose:hover {
   background: rgba(255, 255, 255, 0.30);
+}
+
+.lightboxNavBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  font-size: 20px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all var(--duration-fast);
+  z-index: 10;
+}
+
+.lightboxNavBtn:hover {
+  background: var(--color-primary);
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 4px 14px rgba(30, 80, 255, 0.4);
+}
+
+.lightboxNavPrev {
+  left: 16px;
+}
+
+.lightboxNavNext {
+  right: 16px;
+}
+
+.lightboxCounter {
+  position: absolute;
+  bottom: -36px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* ── Global Dark Mode Surface Overrides ────────────────────────── */
+:global([data-theme="dark"]) .nav {
+  background: rgba(19, 27, 46, 0.88);
+  border-bottom-color: rgba(35, 47, 77, 0.9);
+}
+
+:global([data-theme="dark"]) .bottomNav {
+  background: rgba(19, 27, 46, 0.95);
+  border-top-color: rgba(35, 47, 77, 0.9);
+}
+
+:global([data-theme="dark"]) .modalCloseBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
 }

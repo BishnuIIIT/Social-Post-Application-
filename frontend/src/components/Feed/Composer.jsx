@@ -31,11 +31,14 @@ const MAX_IMAGES = 12;
 
 const fileKey = (file) => `${file.name}:${file.size}:${file.lastModified}:${file.type}`;
 
+const QUICK_EMOJIS = ["🔥", "❤️", "👏", "🎉", "🚀", "💡", "💯", "✨"];
+
 export default function Composer({ user, onCreated, onToast }) {
   const [text, setText] = useState("");
   const [selectedImages, setSelectedImages] = useState([]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
 
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -63,8 +66,8 @@ export default function Composer({ user, onCreated, onToast }) {
     autoGrow();
   };
 
-  const handleImageSelection = (event) => {
-    const files = Array.from(event.target.files || []);
+  /** Process files from file input or drag-and-drop */
+  const processFiles = (files) => {
     const unsupportedFiles = files.filter((file) => !ACCEPTED_IMAGE_TYPES.has(file.type));
     const existingKeys = new Set(selectedImagesRef.current.map(({ key }) => key));
     const availableSlots = MAX_IMAGES - selectedImagesRef.current.length;
@@ -83,9 +86,49 @@ export default function Composer({ user, onCreated, onToast }) {
     } else if (files.length && !additions.length && availableSlots <= 0) {
       setError(`You can attach up to ${MAX_IMAGES} images to one post.`);
     }
+  };
 
-    // Allows the same picker file to be chosen again; duplicate protection is state-based.
+  const handleImageSelection = (event) => {
+    const files = Array.from(event.target.files || []);
+    processFiles(files);
     event.target.value = "";
+  };
+
+  // Drag and drop handlers
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer?.files?.length) {
+      processFiles(Array.from(e.dataTransfer.files));
+    }
+  };
+
+  /** Insert emoji at cursor position or append to text */
+  const handleInsertEmoji = (emoji) => {
+    const el = textareaRef.current;
+    if (!el) {
+      setText((prev) => prev + emoji);
+      return;
+    }
+    const start = el.selectionStart ?? text.length;
+    const end = el.selectionEnd ?? text.length;
+    const newText = text.slice(0, start) + emoji + text.slice(end);
+    setText(newText);
+    setTimeout(() => {
+      el.focus();
+      el.selectionStart = el.selectionEnd = start + emoji.length;
+      autoGrow();
+    }, 0);
   };
 
   const removeSelectedImage = (key) => {
@@ -107,7 +150,7 @@ export default function Composer({ user, onCreated, onToast }) {
    * Requirement: User can post text, image, or both. Neither is individually mandatory.
    */
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setError("");
 
     const trimmedText = text.trim();
@@ -149,8 +192,33 @@ export default function Composer({ user, onCreated, onToast }) {
   // Submit button is enabled when there is text or at least one selected image.
   const hasContent = text.trim().length > 0 || selectedImages.length > 0;
 
+  /** Ctrl + Enter or Cmd + Enter shortcut */
+  const handleKeyDown = (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      if (!sending && hasContent) {
+        handleSubmit();
+      }
+    }
+  };
+
+  // Char count status classes
+  let charCountClass = styles.charCount;
+  if (text.length > 1950) {
+    charCountClass = `${styles.charCount} ${styles.charCountDanger}`;
+  } else if (text.length > 1800) {
+    charCountClass = `${styles.charCount} ${styles.charCountWarn}`;
+  }
+
   return (
-    <section className={styles.composer} aria-label="Create a post" id="composer-card">
+    <section
+      className={`${styles.composer} ${isDragging ? styles.composerDragOver : ""}`}
+      aria-label="Create a post"
+      id="composer-card"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <form onSubmit={handleSubmit}>
         {/* Header with user avatar */}
         <div className={styles.composerHeader}>
@@ -160,13 +228,14 @@ export default function Composer({ user, onCreated, onToast }) {
           </span>
         </div>
 
-        {/* Post Textarea */}
+        {/* Post Textarea with shortcut listener */}
         <textarea
           ref={textareaRef}
           className={styles.composerTextarea}
           value={text}
           onChange={handleTextChange}
-          placeholder="Share an update, moment, or question with the TaskPlanet community..."
+          onKeyDown={handleKeyDown}
+          placeholder="Share an update, moment, or question with the TaskPlanet community... (Drag images here or use #hashtags)"
           maxLength={MAX_CHARS}
           aria-label="Post text"
           rows={3}
@@ -226,10 +295,29 @@ export default function Composer({ user, onCreated, onToast }) {
             <span>Add image</span>
           </button>
 
-          {/* Character counter */}
-          <span className={styles.charCount}>
-            {text.length} / {MAX_CHARS}
-          </span>
+          {/* Quick Emoji Bar */}
+          <div className={styles.emojiBar} aria-label="Quick emojis">
+            {QUICK_EMOJIS.map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                className={styles.emojiBtn}
+                onClick={() => handleInsertEmoji(emoji)}
+                title={`Insert ${emoji}`}
+                aria-label={`Insert ${emoji}`}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+
+          {/* Counter group with keyboard shortcut hint */}
+          <div className={styles.counterGroup}>
+            <span className={styles.shortcutHint}>Ctrl + Enter ↵</span>
+            <span className={charCountClass}>
+              {text.length} / {MAX_CHARS}
+            </span>
+          </div>
 
           {/* Post submit button */}
           <button

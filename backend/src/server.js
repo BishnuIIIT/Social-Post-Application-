@@ -13,6 +13,8 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import User from "./models/User.js";
 import authRoutes from "./routes/auth.js";
 import postRoutes from "./routes/posts.js";
 import { UPLOAD_DIRECTORY } from "./middleware/upload.js";
@@ -59,12 +61,16 @@ app.use(express.json({ limit: "1mb" }));
 app.use("/uploads", express.static(UPLOAD_DIRECTORY));
 
 // ── Health check endpoint ─────────────────────────────────────────
-// Used by uptime monitors and CI readiness probes.
-app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
+// Used by uptime monitors, deployment health checks, and CI probes.
+app.get(["/api/health", "/health"], (_req, res) => res.json({ status: "ok" }));
 
 // ── Feature routes ────────────────────────────────────────────────
+// Mounted with and without /api prefix so requests work regardless of whether
+// VITE_API_URL was configured with or without trailing /api
 app.use("/api/auth",  authRoutes);
+app.use("/auth",      authRoutes);
 app.use("/api/posts", postRoutes);
+app.use("/posts",     postRoutes);
 
 // ── Global error handler ──────────────────────────────────────────
 // Catches any error passed via next(error) from route handlers.
@@ -76,17 +82,53 @@ app.use((error, _req, res, _next) => {
     .json({ message: error.message || "Something went wrong. Please try again." });
 });
 
+// ── Environment Guard ─────────────────────────────────────────────
+if (!process.env.JWT_SECRET) {
+  process.env.JWT_SECRET = "pulse-social-default-secret-jwt-key-2026";
+}
+
+if (!process.env.MONGODB_URI) {
+  console.error("❌ CRITICAL: MONGODB_URI environment variable is missing!");
+  console.error("👉 Please add MONGODB_URI in your Render Dashboard under Environment Variables.");
+  process.exit(1);
+}
+
 // ── Bootstrap ─────────────────────────────────────────────────────
 const port = process.env.PORT || 5000;
+const host = "0.0.0.0";
+
+async function seedDemoUser() {
+  try {
+    const existing = await User.findOne({ email: "alex@taskplanet.com" });
+    if (!existing) {
+      const hashedPassword = await bcrypt.hash("password123", 12);
+      await User.create({
+        username: "Alex Rivera",
+        email: "alex@taskplanet.com",
+        password: hashedPassword,
+      });
+      console.log("🌱 Seeded demo user: alex@taskplanet.com / password123");
+    }
+  } catch (err) {
+    // Non-fatal seed check
+  }
+}
 
 mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() =>
-    app.listen(port, () =>
-      console.log(`✅ API listening on http://localhost:${port}`)
-    )
-  )
+  .connect(process.env.MONGODB_URI, {
+    serverSelectionTimeoutMS: 10000,
+  })
+  .then(async () => {
+    await seedDemoUser();
+    app.listen(port, host, () =>
+      console.log(`✅ API listening on ${host}:${port}`)
+    );
+  })
   .catch((error) => {
     console.error("❌ MongoDB connection failed:", error.message);
+    if (error.name === "MongooseServerSelectionError") {
+      console.error("👉 In MongoDB Atlas -> Network Access -> Add IP Address -> Select 'Allow Access From Anywhere' (0.0.0.0/0).");
+      console.error("👉 Also check that your database username and password in MONGODB_URI are correct.");
+    }
     process.exit(1);
   });

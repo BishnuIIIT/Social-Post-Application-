@@ -85,6 +85,43 @@
   --duration-slow: 400ms;
 }
 
+/* ── Dark Theme Tokens ─────────────────────────────────────────── */
+[data-theme="dark"] {
+  --color-primary:        #3B82F6;
+  --color-primary-hover:  #60A5FA;
+  --color-primary-light:  rgba(59, 130, 246, 0.15);
+  --color-primary-border: rgba(59, 130, 246, 0.35);
+
+  --gradient-primary:     linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+  --gradient-primary-r:   linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+
+  --color-accent:         #FB923C;
+  --color-accent-light:   rgba(251, 146, 60, 0.15);
+  --color-like:           #F87171;
+  --color-like-light:     rgba(248, 113, 113, 0.15);
+  --color-success:        #34D399;
+  --color-success-light:  rgba(52, 211, 153, 0.15);
+  --color-warning:        #FBBF24;
+  --color-error:          #F87171;
+
+  --color-bg:             #0B0F19;   /* Sleek modern deep space background */
+  --color-surface:        #131B2E;   /* Elevated dark card surface */
+  --color-surface-hover:  #1A243D;
+  --color-border:         #232F4D;
+  --color-border-subtle:  #1A243D;
+
+  --color-text-main:      #F8FAFC;   /* Crisp white-slate text */
+  --color-text-body:      #CBD5E1;   /* Soft slate readability */
+  --color-text-muted:     #94A3B8;   /* Muted subtext */
+  --color-text-subtle:    #64748B;   /* Subtle timestamps */
+
+  --shadow-xs:         0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-sm:         0 2px 8px -1px rgba(0, 0, 0, 0.5);
+  --shadow-card:       0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(255, 255, 255, 0.05);
+  --shadow-card-hover: 0 12px 32px -4px rgba(59, 130, 246, 0.25), 0 0 1px 1px rgba(59, 130, 246, 0.3);
+  --shadow-modal:      0 24px 48px -8px rgba(0, 0, 0, 0.8), 0 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
 /* ── Reset & Foundation ────────────────────────────────────────── */
 *,
 *::before,
@@ -109,6 +146,8 @@ body {
   min-width: 320px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color var(--duration-base) var(--ease-smooth),
+              color var(--duration-base) var(--ease-smooth);
 }
 
 /* ── Controls Normalization ────────────────────────────────────── */
@@ -189,6 +228,48 @@ img {
 @keyframes floatUp {
   0%, 100% { transform: translateY(0px); }
   50%       { transform: translateY(-18px); }
+}
+
+/* Pulsing live presence indicator */
+@keyframes livePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* Micro bounce for emojis */
+@keyframes emojiPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.35) rotate(-5deg); }
+  80%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+/* Heart pop on like */
+@keyframes heartBurst {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.45) rotate(-8deg); }
+  65%  { transform: scale(0.88) rotate(4deg); }
+  85%  { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Drag and drop active border pulse */
+@keyframes dropZonePulse {
+  0%, 100% {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-light);
+  }
+  50% {
+    border-color: var(--color-primary-hover);
+    box-shadow: 0 0 0 6px var(--color-primary-light);
+  }
 }
 
 /* ── Skeleton Pulse Utility ────────────────────────────────────── */

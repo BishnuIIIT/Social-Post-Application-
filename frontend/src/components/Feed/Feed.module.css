@@ -47,14 +47,14 @@
   padding-top: var(--space-4);
 }
 
-/* ── Two-column grid: sidebar | feed ───────────────────────────── */
+/* ── Three-column responsive grid: left sidebar | feed | right widgets ── */
 .layout {
   display: grid;
-  grid-template-columns: 260px minmax(0, 680px);
-  gap: 40px;
-  width: min(calc(100% - 32px), var(--content-width));
+  grid-template-columns: 240px minmax(0, 1fr) 280px;
+  gap: 28px;
+  width: min(calc(100% - 32px), 1200px);
   margin: 0 auto;
-  padding: var(--space-8) 0;
+  padding: var(--space-6) 0;
 }
 
 /* ── Left Sidebar (Profile & Community Quick Nav) ──────────────── */
@@ -276,6 +276,12 @@
   border-color: var(--color-primary-border);
 }
 
+.composerDragOver {
+  border: 2px dashed var(--color-primary) !important;
+  background: var(--color-primary-light) !important;
+  animation: dropZonePulse 1.5s infinite;
+}
+
 .composerHeader {
   display: flex;
   align-items: center;
@@ -410,13 +416,68 @@
   transform: translateY(0);
 }
 
-/* Character counter — pushes submit button to the far right */
-.charCount {
+/* Quick Emoji Bar */
+.emojiBar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 3px 8px;
+}
+
+.emojiBtn {
+  font-size: 15px;
+  line-height: 1;
+  padding: 4px;
+  border-radius: 50%;
+  cursor: pointer;
+  background: none;
+  border: none;
+  transition: transform var(--duration-fast);
+}
+
+.emojiBtn:hover {
+  transform: scale(1.3);
+  animation: emojiPop 0.25s ease-out;
+}
+
+/* Character counter & Shortcut hint */
+.counterGroup {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shortcutHint {
+  font-size: 11px;
+  color: var(--color-text-subtle);
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .shortcutHint {
+    display: inline;
+  }
+}
+
+.charCount {
   font-size: 12px;
   color: var(--color-text-subtle);
-  /* Prevents count width from shifting layout as numbers change */
   font-variant-numeric: tabular-nums;
+  transition: color var(--duration-fast);
+}
+
+.charCountWarn {
+  color: var(--color-warning);
+  font-weight: 700;
+}
+
+.charCountDanger {
+  color: var(--color-error);
+  font-weight: 800;
 }
 
 /* ── Post / Submit Buttons ──────────────────────────────────────── */
@@ -531,6 +592,39 @@
   white-space: pre-wrap;
   word-break: break-word;
   margin: var(--space-3) 0;
+}
+
+/* Hashtag and mention pill tags */
+.hashtagPill {
+  color: var(--color-primary);
+  font-weight: 600;
+  background: var(--color-primary-light);
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+  display: inline-block;
+  text-decoration: none;
+}
+
+.hashtagPill:hover {
+  background: var(--color-primary);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.mentionPill {
+  color: #7C3AED;
+  font-weight: 600;
+  background: rgba(124, 58, 237, 0.1);
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+  display: inline-block;
+}
+
+:global([data-theme="dark"]) .mentionPill {
+  color: #A78BFA;
+  background: rgba(167, 139, 250, 0.18);
 }
 
 /* ── Post Image Grid ────────────────────────────────────────────── */
@@ -714,6 +808,40 @@
   align-items: center;
   gap: 5px;
   transition: background var(--duration-fast), color var(--duration-fast);
+}
+
+.shareBtn:hover {
+  background: var(--color-bg);
+  color: var(--color-text-main);
+}
+
+/* Bookmark / Save Post button */
+.bookmarkBtn {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  padding: 6px 10px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all var(--duration-fast);
+  cursor: pointer;
+}
+
+.bookmarkBtn:hover {
+  background: var(--color-bg);
+  color: var(--color-text-main);
+}
+
+.bookmarkBtnActive {
+  color: #D97706;
+  background: rgba(217, 119, 6, 0.1);
+  font-weight: 700;
+}
+
+:global([data-theme="dark"]) .bookmarkBtnActive {
+  color: #FBBF24;
+  background: rgba(251, 191, 36, 0.15);
 }
 
 .postOwnerActions {
@@ -957,9 +1085,206 @@
   margin: var(--space-3) 0;
 }
 
+/* ── Right Sidebar & Community Widgets ────────────────────────── */
+.rightSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  position: sticky;
+  top: calc(var(--nav-height) + 24px);
+  height: fit-content;
+}
+
+.widgetCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-4) var(--space-5);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--duration-base);
+}
+
+.widgetCard:hover {
+  box-shadow: var(--shadow-card);
+}
+
+.widgetHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.widgetTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-main);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.widgetBadge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+}
+
+.trendingList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trendingItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.trendingItem:hover {
+  background: var(--color-primary-light);
+}
+
+.trendingMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.trendingTag {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hotBadge {
+  font-size: 9px;
+  background: #EF4444;
+  color: #ffffff;
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.trendingCount {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.trendingArrow {
+  color: var(--color-text-subtle);
+  font-size: 16px;
+}
+
+.memberList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.memberItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.memberMeta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.memberName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.memberRole {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.followBtn {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary-border);
+  transition: all var(--duration-fast);
+  cursor: pointer;
+}
+
+.followBtn:hover {
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+.followBtnActive {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+}
+
+.tipsList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text-body);
+  line-height: 1.5;
+  padding: 0;
+  margin: 0;
+}
+
+.tipsList kbd {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  padding: 1px 4px;
+  font-size: 10px;
+  font-family: inherit;
+}
+
+.tipTag {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
 /* ── Responsive Layout Rules ────────────────────────────────────── */
 
-/* ── Tablet (769px – 900px): sidebar collapses ───────────────── */
+/* ── Laptop (901px – 1120px): right sidebar collapses to 2 columns ── */
+@media (max-width: 1120px) {
+  .layout {
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 32px;
+  }
+  .rightSidebar {
+    display: none;
+  }
+}
+
+/* ── Tablet (769px – 900px): left sidebar collapses ──────────── */
 @media (max-width: 900px) {
   .layout {
     grid-template-columns: 1fr;
@@ -967,7 +1292,8 @@
     width: min(calc(100% - 24px), 660px);
     padding: var(--space-4) 0;
   }
-  .sidebar {
+  .sidebar,
+  .rightSidebar {
     display: none;
   }
 }

@@ -45,12 +45,15 @@ const PostCard = React.memo(function PostCard({
   onAddComment,
   onDeletePost,
   onToast,
+  onHashtagClick,
+  isSaved = false,
+  onToggleSave,
   isNew = false,
 }) {
   // ── Local UI State ─────────────────────────────────────────────
   const [showComments, setShowComments]       = useState(false);
   const [showLikersModal, setShowLikersModal] = useState(false);
-  const [lightboxImage, setLightboxImage]     = useState(null);
+  const [lightboxIndex, setLightboxIndex]     = useState(null);
   const [deleteBusy, setDeleteBusy]           = useState(false);
 
   /**
@@ -66,8 +69,6 @@ const PostCard = React.memo(function PostCard({
   const [likeAnimKey, setLikeAnimKey] = useState(0);
 
   // ── Derived Data ───────────────────────────────────────────────
-
-  /** List of usernames who liked this post (for the likers banner & modal). */
   const likedUsers   = post.likedUsers || [];
   const commentCount = (post.comments || []).length;
 
@@ -81,18 +82,28 @@ const PostCard = React.memo(function PostCard({
       ? [post.imageUrl]
       : [];
 
+  // Keyboard navigation for multi-image lightbox
+  React.useEffect(() => {
+    if (lightboxIndex === null) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setLightboxIndex(null);
+      } else if (e.key === "ArrowRight" && postImages.length > 1) {
+        setLightboxIndex((prev) => (prev + 1) % postImages.length);
+      } else if (e.key === "ArrowLeft" && postImages.length > 1) {
+        setLightboxIndex((prev) => (prev - 1 + postImages.length) % postImages.length);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxIndex, postImages.length]);
+
   // ── Handlers ──────────────────────────────────────────────────
 
-  /**
-   * Handle Instant Optimistic Like.
-   *
-   * Triggers the usePosts optimistic toggle (0 ms perceived latency).
-   * Increments likeAnimKey to re-fire the CSS heartbeat on every click.
-   */
   const handleLikeClick = async () => {
     if (likeBusy || !currentUser) return;
     setLikeBusy(true);
-    setLikeAnimKey((k) => k + 1); // Retrigger CSS animation
+    setLikeAnimKey((k) => k + 1);
     try {
       await onToggleLike(post.id, currentUser);
     } catch (err) {
@@ -102,31 +113,20 @@ const PostCard = React.memo(function PostCard({
     }
   };
 
-  /**
-   * Handle Post Sharing.
-   *
-   * Uses the Clipboard API when available to copy a post preview link.
-   * Falls back gracefully on older browsers.
-   */
   const handleShareClick = async () => {
-    const shareText = `Check out this post by @${post.username} on TaskPlanet Social: ${post.text.slice(0, 80)}`;
+    const shareText = `Check out this post by @${post.username} on TaskPlanet Social: ${post.text?.slice(0, 80) || ""}`;
     try {
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(`${shareText}\n${window.location.origin}`);
         if (onToast) onToast("Post link copied to clipboard!", "success");
       } else {
-        // Clipboard API not available (e.g. non-HTTPS context)
-        if (onToast) onToast("Share copied!", "success");
+        if (onToast) onToast("Share link copied!", "success");
       }
     } catch {
       if (onToast) onToast("Copied to clipboard!", "success");
     }
   };
 
-  /**
-   * Determine whether the currently authenticated user is the author
-   * of this post so we can conditionally show the Delete action.
-   */
   const isOwner = Boolean(
     currentUser && (
       (post.author && String(post.author) === String(currentUser.id)) ||
@@ -134,10 +134,6 @@ const PostCard = React.memo(function PostCard({
     )
   );
 
-  /**
-   * Handle deleting the post.
-   * Prompts the user with a confirmation dialog before proceeding.
-   */
   const handleDeleteClick = async () => {
     if (deleteBusy) return;
     const confirmed = window.confirm("Are you sure you want to delete this post? This cannot be undone.");
@@ -155,6 +151,41 @@ const PostCard = React.memo(function PostCard({
     }
   };
 
+  /** Formats text with clickable hashtags and styled mentions */
+  const renderFormattedText = (text) => {
+    if (!text) return null;
+    const tokens = text.split(/(#[a-zA-Z0-9_\u0080-\uFFFF]+|@[a-zA-Z0-9_]+)/g);
+    return tokens.map((token, i) => {
+      if (token.startsWith("#")) {
+        const tag = token.slice(1);
+        return (
+          <span
+            key={i}
+            className={styles.hashtagPill}
+            onClick={(e) => {
+              e.stopPropagation();
+              onHashtagClick?.(tag);
+            }}
+            role="button"
+            tabIndex={0}
+            title={`Filter posts by #${tag}`}
+            onKeyDown={(e) => e.key === "Enter" && onHashtagClick?.(tag)}
+          >
+            {token}
+          </span>
+        );
+      }
+      if (token.startsWith("@")) {
+        return (
+          <span key={i} className={styles.mentionPill}>
+            {token}
+          </span>
+        );
+      }
+      return token;
+    });
+  };
+
   // ── Render ─────────────────────────────────────────────────────
   return (
     <article
@@ -167,7 +198,6 @@ const PostCard = React.memo(function PostCard({
           <Avatar name={post.username} size="md" />
           <div className={styles.postMeta}>
             <span className={styles.postUsername}>@{post.username}</span>
-            {/* time element lets browsers/AT know this is a timestamp */}
             <time
               className={styles.postTime}
               dateTime={post.createdAt}
@@ -178,38 +208,19 @@ const PostCard = React.memo(function PostCard({
           </div>
         </div>
 
-        {/* Right header actions: Delete (for owner) + Share */}
+        {/* Right header actions: Bookmark + Share + Delete (for owner) */}
         <div className={styles.postOwnerActions}>
-          {isOwner && (
-            <button
-              type="button"
-              className={styles.deleteBtn}
-              onClick={handleDeleteClick}
-              disabled={deleteBusy}
-              title="Delete this post"
-              aria-label="Delete this post"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                <line x1="10" y1="11" x2="10" y2="17" />
-                <line x1="14" y1="11" x2="14" y2="17" />
-              </svg>
-              <span>{deleteBusy ? "Deleting…" : "Delete"}</span>
-            </button>
-          )}
+          <button
+            type="button"
+            className={`${styles.bookmarkBtn} ${isSaved ? styles.bookmarkBtnActive : ""}`}
+            onClick={() => onToggleSave?.(post.id)}
+            title={isSaved ? "Remove from saved" : "Bookmark this post"}
+            aria-label={isSaved ? "Post is bookmarked" : "Bookmark post"}
+          >
+            <span aria-hidden="true">{isSaved ? "🔖" : "📑"}</span>
+            <span>{isSaved ? "Saved" : "Save"}</span>
+          </button>
 
-          {/* Share icon button */}
           <button
             type="button"
             className={styles.shareBtn}
@@ -227,32 +238,50 @@ const PostCard = React.memo(function PostCard({
             </svg>
             <span>Share</span>
           </button>
+
+          {isOwner && (
+            <button
+              type="button"
+              className={styles.deleteBtn}
+              onClick={handleDeleteClick}
+              disabled={deleteBusy}
+              title="Delete this post"
+              aria-label="Delete this post"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                <line x1="10" y1="11" x2="10" y2="17" />
+                <line x1="14" y1="11" x2="14" y2="17" />
+              </svg>
+              <span>{deleteBusy ? "Deleting…" : "Delete"}</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* ── Post Body Text ───────────────────────────────────── */}
-      {post.text && <p className={styles.postText}>{post.text}</p>}
+      {/* ── Post Body Text with Hashtags ─────────────────────── */}
+      {post.text && <p className={styles.postText}>{renderFormattedText(post.text)}</p>}
 
       {/* ── Post Images ──────────────────────────────────────── */}
-      {/* Grid supports both a single wide image and multi-image layouts */}
       {postImages.length > 0 && (
         <div className={`${styles.postImageGrid} ${postImages.length === 1 ? styles.postImageGridSingle : ""}`}>
           {postImages.map((imageUrl, index) => (
             <div
               className={styles.postImageWrapper}
-              onClick={() => setLightboxImage(imageUrl)}
+              onClick={() => setLightboxIndex(index)}
               title="Click to view full image"
               role="button"
               tabIndex={0}
               key={imageUrl}
-              onKeyDown={(e) => e.key === "Enter" && setLightboxImage(imageUrl)}
+              onKeyDown={(e) => e.key === "Enter" && setLightboxIndex(index)}
             >
               <img
                 className={styles.postImage}
                 src={imageUrl}
                 alt={`Image ${index + 1} attached to post by ${post.username}`}
                 loading="lazy"
-                /* Hide broken images instead of showing a broken-image icon */
                 onError={(e) => { e.currentTarget.style.display = "none"; }}
               />
               <span className={styles.imageExpandBadge} aria-hidden="true">🔍 Expand</span>
@@ -262,7 +291,6 @@ const PostCard = React.memo(function PostCard({
       )}
 
       {/* ── Likers Banner ────────────────────────────────────── */}
-      {/* Fulfils: "Save the usernames of people who liked or commented." */}
       {post.likes > 0 && likedUsers.length > 0 && (
         <div
           className={styles.likersBanner}
@@ -272,7 +300,6 @@ const PostCard = React.memo(function PostCard({
           title="View all users who liked this post"
           onKeyDown={(e) => e.key === "Enter" && setShowLikersModal(true)}
         >
-          {/* Overlapping mini-avatars for the first 3 likers */}
           <div className={styles.likersAvatars}>
             {likedUsers.slice(0, 3).map((u, i) => (
               <div key={i} className={styles.likersAvatarMini}>
@@ -293,8 +320,6 @@ const PostCard = React.memo(function PostCard({
       {/* ── Action Bar: Likes & Comments ─────────────────────── */}
       <div className={styles.postActions}>
         <div className={styles.actionGroupLeft}>
-
-          {/* Like Button — filled crimson when liked */}
           <button
             type="button"
             className={`${styles.actionBtn} ${post.likedByMe ? styles.actionBtnLiked : ""}`}
@@ -303,14 +328,12 @@ const PostCard = React.memo(function PostCard({
             aria-label={post.likedByMe ? "Unlike this post" : "Like this post"}
             disabled={likeBusy}
           >
-            {/* key change re-triggers the CSS animation on every click */}
             <span className={styles.heartIcon} key={likeAnimKey} aria-hidden="true">
               {post.likedByMe ? "❤️" : "🤍"}
             </span>
             <span>{post.likes} {post.likes === 1 ? "Like" : "Likes"}</span>
           </button>
 
-          {/* Comment Toggle Button */}
           <button
             type="button"
             className={styles.actionBtn}
@@ -343,31 +366,67 @@ const PostCard = React.memo(function PostCard({
         />
       )}
 
-      {/* ── Image Lightbox Modal ─────────────────────────────── */}
-      {lightboxImage && (
+      {/* ── Multi-Image Lightbox Modal ───────────────────────── */}
+      {lightboxIndex !== null && postImages[lightboxIndex] && (
         <div
           className={sharedStyles.modalOverlay}
-          onClick={() => setLightboxImage(null)}
+          onClick={() => setLightboxIndex(null)}
           role="dialog"
           aria-modal="true"
           aria-label="Full-size image preview"
         >
-          {/* stopPropagation prevents the overlay click-to-close from
-              firing when the user clicks inside the image itself */}
           <div className={sharedStyles.lightboxModal} onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
               className={sharedStyles.lightboxClose}
-              onClick={() => setLightboxImage(null)}
+              onClick={() => setLightboxIndex(null)}
               aria-label="Close image preview"
             >
               ✕
             </button>
+
+            {/* Previous Image Button (if multiple images) */}
+            {postImages.length > 1 && (
+              <button
+                type="button"
+                className={`${sharedStyles.lightboxNavBtn} ${sharedStyles.lightboxNavPrev}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxIndex((prev) => (prev - 1 + postImages.length) % postImages.length);
+                }}
+                aria-label="Previous image"
+              >
+                ‹
+              </button>
+            )}
+
             <img
-              src={lightboxImage}
-              alt={`Full-size image shared by @${post.username}`}
+              src={postImages[lightboxIndex]}
+              alt={`Full-size image ${lightboxIndex + 1} of ${postImages.length} by @${post.username}`}
               className={sharedStyles.lightboxImage}
             />
+
+            {/* Next Image Button (if multiple images) */}
+            {postImages.length > 1 && (
+              <button
+                type="button"
+                className={`${sharedStyles.lightboxNavBtn} ${sharedStyles.lightboxNavNext}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxIndex((prev) => (prev + 1) % postImages.length);
+                }}
+                aria-label="Next image"
+              >
+                ›
+              </button>
+            )}
+
+            {/* Image counter pill */}
+            {postImages.length > 1 && (
+              <div className={sharedStyles.lightboxCounter}>
+                {lightboxIndex + 1} / {postImages.length}
+              </div>
+            )}
           </div>
         </div>
       )}

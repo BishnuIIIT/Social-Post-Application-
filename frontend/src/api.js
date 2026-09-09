@@ -1,56 +1,72 @@
 /**
  * @file api.js
- * @description Centralised API client for the Pulse Social frontend.
+ * @description Centralised API client for the Pulse / TaskPlanet Social frontend.
  *
- * Every request automatically:
- *  - Sets Content-Type to application/json for JSON requests
- *  - Leaves multipart FormData headers to the browser so it can add a boundary
- *  - Attaches the stored JWT as a Bearer token (when present)
- *  - Throws a descriptive Error for non-2xx responses
+ * Resilient features:
+ *  - Automatically strips duplicate or trailing slashes from VITE_API_URL
+ *  - Sets Content-Type to application/json for regular JSON bodies
+ *  - Automatically lets browser handle multipart/form-data boundary for file uploads
+ *  - Attaches Bearer JWT token when present in localStorage
+ *  - Provides human-readable error messages for 404, 401, and 500 statuses
  */
 
-/** Base URL — override via VITE_API_URL in .env */
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+/** Normalise Base API URL from environment */
+const rawUrl = (import.meta.env.VITE_API_URL || "http://localhost:5000/api").trim();
+// Strip any trailing slashes e.g. "https://api.example.com/" -> "https://api.example.com"
+const cleanUrl = rawUrl.replace(/\/+$/, "");
+// If the configured URL ends with /api, use it as is; otherwise keep cleanUrl
+export const API_URL = cleanUrl;
 
 /**
- * Make an authenticated JSON request to the Pulse API.
+ * Make an authenticated request to the backend API.
  *
- * @param {string}      path       - API path, e.g. `"/posts?page=1"`.
- * @param {RequestInit} [options]  - Standard Fetch options (method, body, …).
- * @returns {Promise<any>}         Parsed JSON response body.
- * @throws  {Error}                When the network fails or status is non-2xx.
- *
- * @example
- * // GET posts
- * const { posts, hasMore } = await api("/posts?page=1");
- *
- * // POST a new post
- * const { post } = await api("/posts", {
- *   method: "POST",
- *   body: JSON.stringify({ text: "Hello world!" }),
- * });
+ * @param {string}      path       - API path, e.g. `"/auth/login"` or `"/posts"`.
+ * @param {RequestInit} [options]  - Fetch options (method, body, headers...).
+ * @returns {Promise<any>}         Parsed JSON response.
  */
 export async function api(path, options = {}) {
   const token = localStorage.getItem("pulse_token");
   const isFormData = options.body instanceof FormData;
 
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      // Never set multipart Content-Type manually; fetch adds the required boundary.
-      ...(!isFormData ? { "Content-Type": "application/json" } : {}),
-      // Attach JWT only when a token exists (unauthenticated feed reads are allowed)
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      // Allow callers to override individual headers
-      ...options.headers,
-    },
-  });
+  // Build safe URL without double slashes
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const targetUrl = `${API_URL}${normalizedPath}`;
 
-  // Attempt JSON parse; fall back gracefully for empty bodies (e.g. 204)
+  let response;
+  try {
+    response = await fetch(targetUrl, {
+      ...options,
+      headers: {
+        // Only set Content-Type for JSON (fetch must set multipart boundary for FormData)
+        ...(!isFormData ? { "Content-Type": "application/json" } : {}),
+        // Attach JWT token if authenticated
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
+    });
+  } catch (networkError) {
+    throw new Error(
+      "Unable to connect to the backend server. Please check your internet connection and ensure the backend is running."
+    );
+  }
+
+  // Parse JSON response safely
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.message || `Request failed with status ${response.status}.`);
+    let errorMsg = data.message;
+    if (!errorMsg) {
+      if (response.status === 404) {
+        errorMsg = "API endpoint not found (404). Please ensure the backend server is running and your API URL is correct.";
+      } else if (response.status === 401) {
+        errorMsg = "Incorrect email or password. If you don't have an account yet, please sign up.";
+      } else if (response.status >= 500) {
+        errorMsg = `Server error (${response.status}). Please try again shortly.`;
+      } else {
+        errorMsg = `Request failed with status ${response.status}.`;
+      }
+    }
+    throw new Error(errorMsg);
   }
 
   return data;
