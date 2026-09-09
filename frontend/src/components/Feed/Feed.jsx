@@ -24,6 +24,7 @@ import Avatar       from "../shared/Avatar.jsx";
 import Spinner      from "../shared/Spinner.jsx";
 import EmptyState   from "../shared/EmptyState.jsx";
 import ErrorMessage from "../shared/ErrorMessage.jsx";
+import PaginationControls from "../shared/PaginationControls.jsx";
 import Composer     from "./Composer.jsx";
 import PostCard     from "./PostCard.jsx";
 import RightSidebar from "./RightSidebar.jsx";
@@ -59,36 +60,6 @@ function SkeletonCard() {
       {/* Image placeholder — gives the skeleton more visual weight */}
       <div className={styles.skeletonImage} />
     </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────────
-   PaginationFooter — Progress bar + "Showing X–Y of Z posts" label.
-   Extracted as a local sub-component for readability; not reused
-   elsewhere so it stays in this file rather than shared/.
-   ──────────────────────────────────────────────────────────────── */
-function PaginationFooter({ loaded, total }) {
-  if (total === 0) return null;
-
-  /** Percentage loaded (0–100), capped at 100 to handle edge cases. */
-  const progressPct = Math.min(Math.round((loaded / total) * 100), 100);
-
-  return (
-    <>
-      {/* Visual progress bar */}
-      <div className={styles.feedProgress} role="progressbar" aria-valuenow={progressPct} aria-valuemin={0} aria-valuemax={100}>
-        <div className={styles.feedProgressBar} style={{ width: `${progressPct}%` }} />
-      </div>
-
-      {/* Textual status: "Showing 1–10 of 47 posts" */}
-      <div className={styles.paginationInfo}>
-        <span>
-          Showing <strong>1–{loaded}</strong> of{" "}
-          <strong>{total}</strong>{" "}
-          post{total === 1 ? "" : "s"}
-        </span>
-      </div>
-    </>
   );
 }
 
@@ -381,31 +352,13 @@ export default function Feed({ user, onLogout }) {
 
           {/* ── Active Search Filter Notice ─────────────────────── */}
           {searchQuery.trim() && (
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              background: "var(--color-primary-light)",
-              border: "1px solid var(--color-primary-border)",
-              borderRadius: "var(--radius-md)",
-              padding: "8px 14px",
-              marginBottom: 16,
-              fontSize: 13,
-              color: "var(--color-primary)",
-              fontWeight: 600
-            }}>
+            <div className={styles.filterNotice}>
               <span>Filtering posts by: <strong>"{searchQuery}"</strong></span>
               <button
                 type="button"
+                className={styles.filterNoticeClear}
                 onClick={() => setSearchQuery("")}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "var(--color-primary)",
-                  cursor: "pointer",
-                  fontWeight: 700,
-                  fontSize: 12
-                }}
+                aria-label="Clear filter"
               >
                 ✕ Clear
               </button>
@@ -446,34 +399,20 @@ export default function Feed({ user, onLogout }) {
             />
           )}
 
-          {/* ── Load More Button ────────────────────────────────── */}
-          {hasMore && filter !== "saved" && !searchQuery && (
-            <button
-              type="button"
-              className={styles.loadMoreBtn}
-              onClick={loadMore}
-              disabled={loadingMore}
-              aria-label={loadingMore ? "Loading posts…" : "Load more posts"}
-            >
-              {loadingMore ? (
-                <>
-                  <Spinner size={16} color="var(--color-primary)" />
-                  <span>Loading more moments...</span>
-                </>
-              ) : (
-                <span>Load more posts</span>
-              )}
-            </button>
-          )}
-
-          {/* ── Progress Bar + "Showing X–Y of Z" Info ─────────── */}
+          {/* ── Reusable Pagination Controls ─────────────────────── */}
           {!loading && displayPosts.length > 0 && (
-            <PaginationFooter loaded={displayPosts.length} total={total} />
+            <PaginationControls
+              loadedCount={displayPosts.length}
+              totalCount={Boolean(searchQuery.trim()) || filter === "saved" ? displayPosts.length : total}
+              hasMore={hasMore && filter !== "saved" && !searchQuery.trim()}
+              loadingMore={loadingMore}
+              onLoadMore={loadMore}
+            />
           )}
         </main>
 
-        {/* ── Right Sidebar: Trending Topics & Community Pulse ─── */}
-        <RightSidebar onSelectTag={handleHashtagClick} />
+        {/* ── Right Sidebar: Who to Connect & Community Tips ── */}
+        <RightSidebar />
       </div>
 
       {/* ── Mobile Bottom Navigation Bar ───────────────────────── */}

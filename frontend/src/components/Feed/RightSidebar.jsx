@@ -1,131 +1,130 @@
 /**
  * @file RightSidebar.jsx
- * @description Desktop right-hand community widget column for the 3-column feed layout.
- *
- * Features:
- *  - "🔥 Trending Topics" card with clickable tags that filter the feed
- *  - "✨ Community Spotlight" with interactive Follow/Following toggles
- *  - "💡 Community Tips" with helpful app tips & shortcuts
- *
- * @param {object}   props
- * @param {Function} [props.onSelectTag] - Callback when user clicks a trending hashtag.
+ * @description Community sidebar containing suggested member connections and helpful tips.
  */
 
 import React, { useState } from "react";
 import Avatar from "../shared/Avatar.jsx";
-import styles from "./Feed.module.css";
+import styles from "./RightSidebar.module.css";
 
-const TRENDING_TOPICS = [
-  { tag: "TaskPlanet", count: "128 posts", isHot: true },
-  { tag: "WebDev", count: "94 posts", isHot: true },
-  { tag: "FullStack", count: "67 posts", isHot: false },
-  { tag: "DesignSystems", count: "51 posts", isHot: false },
-  { tag: "React18", count: "43 posts", isHot: false },
+/** Recommended community members to connect with */
+const SUGGESTED_USERS = [
+  {
+    id: "alex",
+    username: "AlexRivera",
+    role: "Full-Stack Dev",
+  },
+  {
+    id: "sarah",
+    username: "SarahChen",
+    role: "UI/UX Designer",
+  },
+  {
+    id: "david",
+    username: "DavidDev",
+    role: "Open Source Contributor",
+  },
 ];
 
-const SUGGESTED_MEMBERS = [
-  { username: "AlexRivera", role: "Product Designer" },
-  { username: "SarahChen", role: "Frontend Architect" },
-  { username: "DavidDev", role: "Cloud & MongoDB" },
+/** Community best practice tips */
+const COMMUNITY_TIPS = [
+  {
+    id: "drag-drop",
+    title: "Drag & Drop",
+    desc: "Drag images directly into the composer or paste image URLs.",
+  },
+  {
+    id: "shortcuts",
+    title: "Shortcuts",
+    desc: "Likes and comments update instantly with optimistic UI feedback.",
+  },
+  {
+    id: "discover",
+    title: "Discover",
+    desc: "Use bookmarks to save your favorite community moments.",
+  },
 ];
 
-export default function RightSidebar({ onSelectTag }) {
-  const [followingMap, setFollowingMap] = useState({});
+export default function RightSidebar() {
+  // Interactive follow state persisted in localStorage
+  const [following, setFollowing] = useState(() => {
+    try {
+      const saved = localStorage.getItem("tp_following_users");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
 
-  const toggleFollow = (username) => {
-    setFollowingMap((prev) => ({
-      ...prev,
-      [username]: !prev[username],
-    }));
+  const toggleFollow = (userId) => {
+    setFollowing((prev) => {
+      const updated = { ...prev, [userId]: !prev[userId] };
+      try {
+        localStorage.setItem("tp_following_users", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
   };
 
   return (
-    <aside className={styles.rightSidebar} aria-label="Community Widgets">
-      {/* ── Trending Topics Card ───────────────────────────────── */}
-      <div className={styles.widgetCard}>
-        <div className={styles.widgetHeader}>
-          <span className={styles.widgetTitle}>
-            <span aria-hidden="true">🔥</span> Trending Topics
-          </span>
-          <span className={styles.widgetBadge}>Live</span>
+    <aside className={styles.sidebarWrapper} aria-label="Community sidebar">
+      {/* ── Card 1: Who to Connect With ─────────────────────────── */}
+      <section className={styles.card} aria-labelledby="connect-heading">
+        <div className={styles.cardHeader}>
+          <h3 id="connect-heading" className={styles.cardTitle}>
+            <span className={styles.headerIcon} aria-hidden="true">✨</span>
+            <span>Who to Connect With</span>
+          </h3>
         </div>
 
-        <div className={styles.trendingList}>
-          {TRENDING_TOPICS.map((item) => (
-            <div
-              key={item.tag}
-              className={styles.trendingItem}
-              onClick={() => onSelectTag?.(item.tag)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === "Enter" && onSelectTag?.(item.tag)}
-              title={`Filter by #${item.tag}`}
-            >
-              <div className={styles.trendingMeta}>
-                <span className={styles.trendingTag}>
-                  #{item.tag}
-                  {item.isHot && <span className={styles.hotBadge}>Hot</span>}
-                </span>
-                <span className={styles.trendingCount}>{item.count}</span>
-              </div>
-              <span className={styles.trendingArrow}>›</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Community Spotlight Card ───────────────────────────── */}
-      <div className={styles.widgetCard}>
-        <div className={styles.widgetHeader}>
-          <span className={styles.widgetTitle}>
-            <span aria-hidden="true">✨</span> Who to Connect With
-          </span>
-        </div>
-
-        <div className={styles.memberList}>
-          {SUGGESTED_MEMBERS.map((member) => {
-            const isFollowing = Boolean(followingMap[member.username]);
+        <div className={styles.userList}>
+          {SUGGESTED_USERS.map((user) => {
+            const isFollowed = Boolean(following[user.id]);
             return (
-              <div key={member.username} className={styles.memberItem}>
-                <Avatar name={member.username} size="sm" />
-                <div className={styles.memberMeta}>
-                  <span className={styles.memberName}>@{member.username}</span>
-                  <span className={styles.memberRole}>{member.role}</span>
+              <div key={user.id} className={styles.userRow}>
+                <div className={styles.userInfo}>
+                  <Avatar name={user.username} size="sm" />
+                  <div className={styles.userMeta}>
+                    <span className={styles.userName}>@{user.username}</span>
+                    <span className={styles.userRole}>{user.role}</span>
+                  </div>
                 </div>
+
                 <button
                   type="button"
-                  className={`${styles.followBtn} ${isFollowing ? styles.followBtnActive : ""}`}
-                  onClick={() => toggleFollow(member.username)}
-                  aria-pressed={isFollowing}
-                  aria-label={`${isFollowing ? "Unfollow" : "Follow"} @${member.username}`}
+                  className={`${styles.followBtn} ${isFollowed ? styles.followBtnActive : ""}`}
+                  onClick={() => toggleFollow(user.id)}
+                  aria-label={`${isFollowed ? "Unfollow" : "Follow"} @${user.username}`}
                 >
-                  {isFollowing ? "Following" : "+ Follow"}
+                  {isFollowed ? "✓ Following" : "+ Follow"}
                 </button>
               </div>
             );
           })}
         </div>
-      </div>
+      </section>
 
-      {/* ── Community Tips & Guidelines ────────────────────────── */}
-      <div className={styles.widgetCard}>
-        <div className={styles.widgetHeader}>
-          <span className={styles.widgetTitle}>
-            <span aria-hidden="true">💡</span> Community Tips
-          </span>
+      {/* ── Card 2: Community Tips ──────────────────────────────── */}
+      <section className={styles.card} aria-labelledby="tips-heading">
+        <div className={styles.cardHeader}>
+          <h3 id="tips-heading" className={styles.cardTitle}>
+            <span className={styles.headerIcon} aria-hidden="true">💡</span>
+            <span>Community Tips</span>
+          </h3>
         </div>
-        <ul className={styles.tipsList}>
-          <li>
-            <strong>Drag & Drop:</strong> Drag multiple photos into the composer anytime.
-          </li>
-          <li>
-            <strong>Shortcuts:</strong> Press <kbd>Ctrl + Enter</kbd> to publish instantly.
-          </li>
-          <li>
-            <strong>Discover:</strong> Use <span className={styles.tipTag}>#hashtags</span> to group topics and join discussions.
-          </li>
-        </ul>
-      </div>
+
+        <div className={styles.tipsList}>
+          {COMMUNITY_TIPS.map((tip) => (
+            <article key={tip.id} className={styles.tipItem}>
+              <div className={styles.tipHeader}>
+                <span className={styles.tipBullet} aria-hidden="true">•</span>
+                <strong className={styles.tipTitle}>{tip.title}:</strong>
+              </div>
+              <p className={styles.tipDesc}>{tip.desc}</p>
+            </article>
+          ))}
+        </div>
+      </section>
     </aside>
   );
 }

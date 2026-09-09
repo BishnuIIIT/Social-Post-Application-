@@ -90,7 +90,7 @@ export default function CommentList({
         </p>
       ) : (
         comments.map((comment, index) => (
-          <div key={comment.id || index} className={styles.commentItem}>
+          <div key={comment.id || `comment-${index}`} className={styles.commentItem}>
             <Avatar name={comment.username || "User"} size="sm" />
 
             {/* Chat-bubble with asymmetric border-radius anchoring to avatar */}

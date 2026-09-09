@@ -47,12 +47,12 @@
   padding-top: var(--space-4);
 }
 
-/* ── Three-column responsive grid: left sidebar | feed | right widgets ── */
+/* ── Responsive grid: left profile | central feed | right community sidebar ── */
 .layout {
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr) 280px;
   gap: 28px;
-  width: min(calc(100% - 32px), 1200px);
+  width: min(calc(100% - 32px), 1180px);
   margin: 0 auto;
   padding: var(--space-6) 0;
 }
@@ -173,6 +173,37 @@
 .feed {
   display: flex;
   flex-direction: column;
+}
+
+/* ── Filter Notice Banner ───────────────────────────────────────── */
+.filterNotice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary-border);
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  margin-bottom: var(--space-4);
+  font-size: 13px;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.filterNoticeClear {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  transition: background var(--duration-fast);
+}
+
+.filterNoticeClear:hover {
+  background: rgba(30, 80, 255, 0.12);
 }
 
 /* ── Tabs & Sorting Bar ─────────────────────────────────────────── */
@@ -1085,206 +1116,17 @@
   margin: var(--space-3) 0;
 }
 
-/* ── Right Sidebar & Community Widgets ────────────────────────── */
-.rightSidebar {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  position: sticky;
-  top: calc(var(--nav-height) + 24px);
-  height: fit-content;
-}
-
-.widgetCard {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  padding: var(--space-4) var(--space-5);
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow var(--duration-base);
-}
-
-.widgetCard:hover {
-  box-shadow: var(--shadow-card);
-}
-
-.widgetHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-3);
-  padding-bottom: var(--space-2);
-  border-bottom: 1px solid var(--color-border-subtle);
-}
-
-.widgetTitle {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-text-main);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.widgetBadge {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  background: rgba(16, 185, 129, 0.15);
-  color: #10B981;
-  padding: 2px 7px;
-  border-radius: var(--radius-full);
-}
-
-.trendingList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.trendingItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 8px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all var(--duration-fast);
-}
-
-.trendingItem:hover {
-  background: var(--color-primary-light);
-}
-
-.trendingMeta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.trendingTag {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-primary);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.hotBadge {
-  font-size: 9px;
-  background: #EF4444;
-  color: #ffffff;
-  padding: 1px 5px;
-  border-radius: var(--radius-full);
-  font-weight: 700;
-  letter-spacing: 0.3px;
-}
-
-.trendingCount {
-  font-size: 11px;
-  color: var(--color-text-muted);
-}
-
-.trendingArrow {
-  color: var(--color-text-subtle);
-  font-size: 16px;
-}
-
-.memberList {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.memberItem {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.memberMeta {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-}
-
-.memberName {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-text-main);
-}
-
-.memberRole {
-  font-size: 11px;
-  color: var(--color-text-muted);
-}
-
-.followBtn {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 5px 10px;
-  border-radius: var(--radius-full);
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-  border: 1px solid var(--color-primary-border);
-  transition: all var(--duration-fast);
-  cursor: pointer;
-}
-
-.followBtn:hover {
-  background: var(--color-primary);
-  color: #ffffff;
-}
-
-.followBtnActive {
-  background: var(--color-surface);
-  color: var(--color-text-muted);
-  border-color: var(--color-border);
-}
-
-.tipsList {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--color-text-body);
-  line-height: 1.5;
-  padding: 0;
-  margin: 0;
-}
-
-.tipsList kbd {
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xs);
-  padding: 1px 4px;
-  font-size: 10px;
-  font-family: inherit;
-}
-
-.tipTag {
-  color: var(--color-primary);
-  font-weight: 700;
-}
-
 /* ── Responsive Layout Rules ────────────────────────────────────── */
 
 /* ── Laptop (901px – 1120px): right sidebar collapses to 2 columns ── */
 @media (max-width: 1120px) {
   .layout {
     grid-template-columns: 240px minmax(0, 1fr);
-    gap: 32px;
-  }
-  .rightSidebar {
-    display: none;
+    gap: 28px;
   }
 }
 
-/* ── Tablet (769px – 900px): left sidebar collapses ──────────── */
+/* ── Tablet & Mobile (≤ 900px): left sidebar collapses to single column ── */
 @media (max-width: 900px) {
   .layout {
     grid-template-columns: 1fr;
@@ -1292,8 +1134,7 @@
     width: min(calc(100% - 24px), 660px);
     padding: var(--space-4) 0;
   }
-  .sidebar,
-  .rightSidebar {
+  .sidebar {
     display: none;
   }
 }

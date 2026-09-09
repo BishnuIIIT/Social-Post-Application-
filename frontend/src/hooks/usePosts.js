@@ -135,9 +135,12 @@ export function usePosts(initialFilter = "all", initialSort = "latest") {
 
         // ── Guard: only commit state if this is still the newest request ──
         if (requestId === activeRequestRef.current) {
-          setPosts((current) =>
-            append ? [...current, ...result.posts] : result.posts
-          );
+          setPosts((current) => {
+            if (!append) return result.posts;
+            const existingIds = new Set(current.map((p) => p.id));
+            const newPosts = (result.posts || []).filter((p) => !existingIds.has(p.id));
+            return [...current, ...newPosts];
+          });
           setHasMore(result.hasMore);
           setTotal(result.total || 0);
           setPage(requestedPage);

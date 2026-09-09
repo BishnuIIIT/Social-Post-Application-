@@ -17,6 +17,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { api } from "../../api.js";
 import Avatar from "../shared/Avatar.jsx";
+import Button from "../shared/Button.jsx";
+import ErrorMessage from "../shared/ErrorMessage.jsx";
 import styles from "./Feed.module.css";
 
 const MAX_CHARS = 2000;
@@ -276,7 +278,7 @@ export default function Composer({ user, onCreated, onToast }) {
         )}
 
         {/* Error message */}
-        {error && <p className={styles.errorMsg} role="alert" style={{ color: "var(--color-error)", fontSize: 13, marginTop: 8 }}>{error}</p>}
+        {error && <ErrorMessage message={error} />}
 
         {/* Footer controls */}
         <div className={styles.composerFooter}>
@@ -320,14 +322,16 @@ export default function Composer({ user, onCreated, onToast }) {
           </div>
 
           {/* Post submit button */}
-          <button
+          <Button
             type="submit"
-            className={styles.postBtn}
-            disabled={sending || !hasContent}
+            variant="primary"
+            size="sm"
+            loading={sending}
+            disabled={!hasContent}
             aria-label={sending ? "Publishing post…" : "Publish post"}
           >
-            {sending ? "Posting…" : "Post"}
-          </button>
+            Post
+          </Button>
         </div>
       </form>
     </section>

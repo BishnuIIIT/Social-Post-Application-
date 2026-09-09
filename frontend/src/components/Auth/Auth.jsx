@@ -15,6 +15,8 @@
 
 import React, { useState, useEffect } from "react";
 import { api } from "../../api.js";
+import Button from "../shared/Button.jsx";
+import ErrorMessage from "../shared/ErrorMessage.jsx";
 import styles from "./Auth.module.css";
 
 function getPasswordStrength(pass) {
@@ -228,21 +230,10 @@ export default function Auth({ onAuth }) {
             <p className={styles.cardEyebrow} style={{ margin: 0 }}>TaskPlanet Social</p>
             <button
               type="button"
+              className={styles.authThemeToggle}
               onClick={toggleTheme}
               title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
               aria-label="Toggle theme"
-              style={{
-                background: "var(--color-bg)",
-                border: "1px solid var(--color-border)",
-                borderRadius: "var(--radius-full)",
-                width: 32,
-                height: 32,
-                display: "grid",
-                placeItems: "center",
-                cursor: "pointer",
-                fontSize: 14,
-                color: "var(--color-text-main)"
-              }}
             >
               {theme === "dark" ? "☀️" : "🌙"}
             </button>
@@ -304,14 +295,16 @@ export default function Auth({ onAuth }) {
               </label>
 
               {!generatedCode ? (
-                <button
+                <Button
                   type="button"
-                  className={styles.submitBtn}
+                  variant="primary"
+                  size="lg"
+                  block
                   onClick={handleRequestResetCode}
-                  disabled={loading}
+                  loading={loading}
                 >
-                  {loading ? "Sending Code…" : "Get Verification Code"}
-                </button>
+                  Get Verification Code
+                </Button>
               ) : (
                 <>
                   {/* Banner showing generated code */}
@@ -360,20 +353,26 @@ export default function Auth({ onAuth }) {
                   </label>
 
                   {/* Submit Reset */}
-                  <button
+                  <Button
                     type="button"
-                    className={styles.submitBtn}
+                    variant="primary"
+                    size="lg"
+                    block
                     onClick={handleResetPassword}
-                    disabled={loading}
+                    loading={loading}
                   >
-                    {loading ? "Updating…" : "Reset Password & Log In"}
-                  </button>
+                    Reset Password & Log In
+                  </Button>
                 </>
               )}
 
               {/* Error Message */}
-              {error && <p className={styles.error} role="alert">{error}</p>}
-              {infoMessage && !error && <p style={{ color: "#059669", fontSize: 13, background: "#ecfdf5", padding: "8px 12px", borderRadius: 8 }}>{infoMessage}</p>}
+              {error && <ErrorMessage message={error} />}
+              {infoMessage && !error && (
+                <p style={{ color: "#059669", fontSize: 13, background: "#ecfdf5", padding: "8px 12px", borderRadius: 8 }}>
+                  {infoMessage}
+                </p>
+              )}
 
               {/* Switch back to Login */}
               <p className={styles.switchRow}>
@@ -486,25 +485,19 @@ export default function Auth({ onAuth }) {
               </label>
 
               {/* Error Message */}
-              {error && (
-                <p className={styles.error} role="alert">
-                  {error}
-                </p>
-              )}
+              {error && <ErrorMessage message={error} />}
 
               {/* Submit Button */}
-              <button
-                className={styles.submitBtn}
+              <Button
                 type="submit"
-                disabled={loading}
+                variant="primary"
+                size="lg"
+                block
+                loading={loading}
                 aria-label={loading ? "Please wait…" : isSignup ? "Create account" : "Log in"}
               >
-                {loading
-                  ? "Please wait…"
-                  : isSignup
-                  ? "Create Account"
-                  : "Log In to Feed"}
-              </button>
+                {isSignup ? "Create Account" : "Log In to Feed"}
+              </Button>
 
               {/* Switch Mode */}
               <p className={styles.switchRow}>

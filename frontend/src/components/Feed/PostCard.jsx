@@ -302,7 +302,7 @@ const PostCard = React.memo(function PostCard({
         >
           <div className={styles.likersAvatars}>
             {likedUsers.slice(0, 3).map((u, i) => (
-              <div key={i} className={styles.likersAvatarMini}>
+              <div key={`${u}-${i}`} className={styles.likersAvatarMini}>
                 <Avatar name={u} size="sm" />
               </div>
             ))}
