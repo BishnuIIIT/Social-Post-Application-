@@ -4,8 +4,7 @@
 [![Styling](https://img.shields.io/badge/Styling-Pure_CSS_Modules_(No_Tailwind)-059669?style=for-the-badge)](https://github.com)
 [![Assignment](https://img.shields.io/badge/Assignment-3W_Full_Stack_Internship-FF6B00?style=for-the-badge)](https://play.google.com/store/apps/details?id=com.taskplanet)
 
-> A modern mini social post application inspired by the **Social Page in the TaskPlanet app** ([Play Store Link](https://play.google.com/store/apps/details?id=com.taskplanet)), built as part of the **3W Full Stack Internship Assignment**.
-
+> 
 ---
 
 ## 📱 TaskPlanet App Inspiration & UI Highlights
